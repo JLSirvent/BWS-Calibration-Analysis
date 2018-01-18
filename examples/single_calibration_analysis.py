@@ -26,40 +26,33 @@ from lib import diagnostic_tools as dt
 
 
 
-# BWS PROTOTYPE SN64
-# ------------------
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype (Python processed mat - PROCESSED folder)\PSB133rs__2017_03_10__20_10 PROCESSED"
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype (Python processed mat - PROCESSED folder)\PSB133rs__2017_03_10__19_27 PROCESSED"
-PROCESSED_folder = "G:\Projects\BWS_Calibrations\Calibrations\BWS_sn64\ProcessedData\SN64__2017_12_11__17_29_Short PROCESSED"
+# BWS PROTOTYPE SN64 (PSB_PXBWSRA005_CR000002)
+# -------------------------------------------
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_13__14_28_Short PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_13__14_49_Short PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_14__15_53 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_19__14_39 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_19__14_51 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_19__15_57 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2018_01_16__16_23 PROCESSED'
+PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2018_01_17__15_03 PROCESSED'
 
 
-# BWS PROTOTYPE SN66
-# ------------------
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_laboratory_ptotoype (Python processed mat - PROCESSED folder)\PSB133rs_Offset06__2017_04_21__10_57 PROCESSED"
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_laboratory_ptotoype (Python processed mat - PROCESSED folder)\PSB133rs_Offset06_TableFixed__2017_04_21__14_30 PROCESSED"
+# BWS PROTOTYPE SN65 (PSB-PXBWSRA005-CR000001)
+# -------------------------------------------
 
-# This one!
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_laboratory_ptotoype (Python processed mat - PROCESSED folder)\PSB133rs_Offset06_TableFixed_ShorterRail__2017_04_21__16_38 PROCESSED"
+# BWS PROTOTYPE PS SN128 (PS_PXBWSRB011_CR000001)
+# -----------------------------------------------
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__09_53 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__10_31 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__16_44 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_01 PROCESSED'
 
-
-# BWS PROTOTYPE SN65
-# ------------------
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype_nbr2 (Python processed mat - PROCESSED folder)\CC01__2017_09_14__16_35 PROCESSED"
-
-# This one!
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype_nbr2 (Python processed mat - PROCESSED folder)\CC05__2017_09_15__15_57 PROCESSED"
-
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype_nbr2 (Python processed mat - PROCESSED folder)\PC01__2017_09_14__17_11 PROCESSED"
-#PROCESSED_folder = "E:\BWS calibration - data\BWS calibration (Processed)\PSB_tunnel_prototype_nbr2 (Python processed mat - PROCESSED folder)\PC03__2017_09_15__16_41 PROCESSED"
-
-# BWS PROTOTYPE PS SN128
-# ----------------------
-#PROCESSED_folder = "G:\Projects\BWS_Calibrations\Calibrations\PS_BWS_SN128\ProcesedData\S128__2017_11_27__16_26 PROCESSED"
 ParametersCurve = []
 
 # Complete calibration plot
-#dt.plot_calibration(folder_name=PROCESSED_folder, in_or_out='IN', complete_residuals_curve=True)
-#dt.plot_calibration_INOUT(folder_name=PROCESSED_folder,complete_residuals_curve=False, remove_sytematics=False, N = 20, impose_parameters=False, parameters = ParametersCurve, inout_independent=True)
+#dt.plot_calibration(folder_name=PROCESSED_folder, in_or_out='IN', complete_residuals_curve=False)
+dt.plot_calibration_INOUT(folder_name=PROCESSED_folder,complete_residuals_curve=False, remove_sytematics=False, N = 1, impose_parameters=False, parameters = ParametersCurve, inout_independent=False)
 
 # All position profile plot (may be long)
 #dt.plot_all_positions(folder_name=PROCESSED_folder, in_or_out='IN')
@@ -67,11 +60,14 @@ ParametersCurve = []
 # All eccentricity profiles plot (may be long)
 #dt.plot_all_eccentricity(folder_name=PROCESSED_folder, in_or_out='OUT')
 
+#dt.plot_all_eccentricityV2(folder_name=PROCESSED_folder)
+
 # All speed profiles plot (may be long)
-#dt.plot_all_speed(folder_name=PROCESSED_folder, in_or_out='OUT')
+#dt.plot_all_speed(folder_name=PROCESSED_folder, in_or_out='IN')
+#dt.plot_all_speedV2(folder_name=PROCESSED_folder)
 
 # Relative distance signature plot (may be long)
 #dt.plot_RDS(folder_name=PROCESSED_folder, in_or_out='OUT')
 
 # References detection in time VS scan number
-#dt.plot_all_referencedetections(folder_name=PROCESSED_folder, in_or_out='OUT', timems = 400)
+#dt.plot_all_referencedetections(folder_name=PROCESSED_folder, in_or_out='OUT', timems = 340)

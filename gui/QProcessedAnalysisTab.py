@@ -35,11 +35,14 @@ import numpy as np
 import configparser
 import scipy.io as sio
 
+from matplotlib import pyplot as plt
+
 from numpy import arange
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QFileDialog, QVBoxLayout, QHBoxLayout
 
 from lib import utils
+from lib import ops_processing as ops
 from gui import QTabWidgetPlotting
 from gui import QFileDescriptionTable
 from gui import QCalibrationInformation
@@ -62,11 +65,8 @@ class QProcessedAnalysisTab(QWidget):
         self.setWindowTitle('OPS Processing')
 
         self.actual_index = 0
-        # self.actual_PROCESSED_folder = "F:\pyBWS01\data/133rs_CC__2017_06_06__17_08 PROCESSED"
-        # self.actual_TDMS_folder = "E:\BWS_Fatigue_Tests\Calibration_Bench_Files/133rs_CC__2017_06_06__17_08"
-        self.actual_PROCESSED_folder = "Click here to select"
-        self.actual_TDMS_folder = "Click here to select"
-        # self.tdms_file_list = utils.tdms_list_from_folder(self.actual_TDMS_folder)
+        self.actual_PROCESSED_folder = ""
+        self.actual_TDMS_folder = ""
         self.tdms_file_list = 0
 
         self.TabWidgetPlotting = QTabWidgetPlotting.QTabWidgetPlotting()
@@ -79,13 +79,42 @@ class QProcessedAnalysisTab(QWidget):
         self.FileDescriptionTable.set_parameters_button.clicked.connect(self.show_parameters_window)
         self.FileDescriptionTable.dump_button.clicked.connect(self.dump_actual_scan)
 
+        # We use a parameter file
+        parameter_file = utils.resource_path('data/parameters.cfg')
+        config = configparser.RawConfigParser()
+        config.read(parameter_file)
+        self.directory = eval(config.get('Application parameters', 'CalibrationsDirectory'))
+        # --
+
+        # Actions
+        folder_list = os.listdir(self.directory)
+
+        self.CalibrationInformation.scanner_selection_cb.addItem('Select Scanner:')
+        self.CalibrationInformation.scanner_selection_cb.addItems(folder_list)
+
+        self.CalibrationInformation.scanner_selection_cb.currentIndexChanged.connect(self.update_calibration_list)
+
+        self.CalibrationInformation.calibration_selection_cb.setEnabled(False)
+        self.CalibrationInformation.calibration_selection_cb.currentIndexChanged.connect(self.set_PROCESSED_folder_v2)
+
+        self.CalibrationInformation.setparam_button.clicked.connect(self.show_parameters_window)
+
+        self.CalibrationInformation.testparam_button.setEnabled(False)
+        self.CalibrationInformation.testparam_button.clicked.connect(self.test_tdms)
+
+        self.CalibrationInformation.processcalibration_button.setEnabled(False)
+        self.CalibrationInformation.processcalibration_button.clicked.connect(self.onStart)
+
+        self.CalibrationInformation.import_button.setEnabled(False)
+        self.CalibrationInformation.import_button.clicked.connect(self.actualise_all)
+
         self.CalibrationInformation.processed_data_selection.label_select_folder.selectionChanged.connect(self.set_PROCESSED_folder)
         self.CalibrationInformation.tdms_data_selection.label_select_folder.selectionChanged.connect(self.set_TDMS_folder)
         self.CalibrationInformation.processed_data_selection.button_select_folder.pressed.connect(self.actualise_all)
 
         self.FileDescriptionTable.table.clicked.connect(self.select_index)
 
-        self.TabWidgetPlotting.tab_eccentricity.actualise_ax()
+        #self.TabWidgetPlotting.tab_eccentricity.actualise_ax()
 
         self.mainLayout = QVBoxLayout()
 
@@ -112,22 +141,251 @@ class QProcessedAnalysisTab(QWidget):
 
         ########################~
 
-
         self.setLayout(self.mainLayout)
 
         # Window properties
         self.resize(100, 50)
 
+
+    def onStart(self):
+
+        #####make security ## ########
+
+        test = utils.tdms_list_from_folder(self.actual_TDMS_folder)
+
+        if type(test) is int:
+            self.parent.LogDialog.add('Specified TDMS folder does not contain .tdms files', 'error')
+
+        elif type(utils.extract_from_tdms(self.actual_TDMS_folder + '/' + test[0][0])[0]) is int:
+            self.parent.LogDialog.add(
+                'TDMS file not loaded because of a key error - try to set [LabView output] in the parameters file',
+                'error')
+
+        elif not os.path.exists(self.actual_destination_folder) or self.actual_destination_folder == '...':
+            self.parent.LogDialog.add(
+                'Please specify a destination folder',
+                'error')
+
+        else:
+
+            self.done = False
+
+            self.myLongTask = utils.CreateRawDataFolder(self.actual_TDMS_folder, self.actual_destination_folder, self)
+            self.myLongTask.notifyProgress.connect(self.onProgress)
+            self.myLongTask.notifyState.connect(self.onState)
+            self.myLongTask.notifyFile.connect(self.onFile)
+            self.CalibrationInformation.processcalibration_button.setEnabled(False)
+            self.myLongTask.start()
+
+            self.parent.LogDialog.add('Starting ' + self.actual_TDMS_folder + ' conversion', 'info')
+
+    def RAW_IN(self):
+
+        self.myLongTask = ops.ProcessRawData(self.actual_destination_folder + '/RAW_DATA/RAW_IN', self.actual_destination_folder)
+        self.myLongTask.notifyProgress.connect(self.onProgress)
+        self.myLongTask.notifyState.connect(self.onState)
+        self.myLongTask.notifyFile.connect(self.onFile)
+        self.CalibrationInformation.processcalibration_button.setEnabled(False)
+        self.myLongTask.start()
+
+    def RAW_OUT(self):
+
+        self.myLongTask = ops.ProcessRawData(self.actual_destination_folder + '/RAW_DATA/RAW_OUT', self.actual_destination_folder)
+        self.myLongTask.notifyProgress.connect(self.onProgress)
+        self.myLongTask.notifyState.connect(self.onState)
+        self.myLongTask.notifyFile.connect(self.onFile)
+        self.CalibrationInformation.processcalibration_button.setEnabled(False)
+        self.myLongTask.start()
+
+    def onProgress(self, i):
+        self.CalibrationInformation.progressBar.setValue(i)
+        if i == 99:
+            #self.Process.setDisabled(False)
+            self.CalibrationInformation.progressBar.reset()
+
+    def onState(self, state):
+        print(state)
+        self.CalibrationInformation.label_progression.setText(state)
+        if state == 'done convert':
+            self.CalibrationInformation.processcalibration_button.setEnabled(True)
+            self.CalibrationInformation.progressBar.reset()
+            self.RAW_IN()
+
+        elif state == 'done IN':
+            self.CalibrationInformation.processcalibration_button.setEnabled(True)
+            self.CalibrationInformation.progressBar.reset()
+            self.RAW_OUT()
+
+
+        elif state == 'done OUT':
+            self.CalibrationInformation.processcalibration_button.setEnabled(True)
+            utils.create_processed_data_folder(self.actual_TDMS_folder, destination_folder=self.actual_destination_folder, force_overwrite='y')
+            self.CalibrationInformation.progressBar.reset()
+
+
+    def onFile(self, file):
+        self.CalibrationInformation.label_file.setText(file)
+
+    def show_parameters_window(self):
+        os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
+
+    def test_tdms(self):
+
+        test = utils.tdms_list_from_folder(self.actual_TDMS_folder)
+
+        if type(test) is int:
+            self.parent.LogDialog.add('Specified TDMS folder does not contain .tdms files', 'error')
+
+        elif type(utils.extract_from_tdms(self.actual_TDMS_folder + '/' + test[0][0])[0]) is int:
+
+            test = utils.extract_from_tdms(self.actual_TDMS_folder + '/' + test[0][0])[0]
+
+            if test == -1:
+                self.parent.LogDialog.add(
+                    'TDMS file not loaded because of a key error - try to set [LabView output] in the parameters file',
+                    'error')
+
+            elif test == -2:
+                self.parent.LogDialog.add(
+                    'One of the range specified is out of data scope - try to set [LabView output] in the parameters file',
+                    'error')
+        else:
+            data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(
+                self.actual_TDMS_folder + '/' + test[0][0])
+
+            if type(data__s_a_in) is not int:
+
+                self.actualise_single_QTab(self.TabWidgetPlotting.tab_OPS_processing,
+                                           data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out,
+                                           t1=time__in, t2=time__out, pd1=data__p_d_in, pd2=data__p_d_out)
+
+                # We use a parameter file
+                parameter_file = utils.resource_path('data/parameters.cfg')
+                config = configparser.RawConfigParser()
+                config.read(parameter_file)
+                RangeIn = eval(config.get('OPS processing parameters', 'IN_range'))
+                RangeOut = eval(config.get('OPS processing parameters', 'OUT_range'))
+                # --
+
+                # Process Positions
+                Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ")
+                Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ")
+                Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ")
+                Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ")
+
+                Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in)
+                Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out)
+
+                # Eccentricity from OPS processing and saving in list
+                _eccentricity_in = np.subtract(Data_SA_in[1], Data_SB_R_in[1]) / 2
+                _eccentricity_out = np.subtract(Data_SA_out[1], Data_SB_R_out[1]) / 2
+
+                # OPS speed processing and smoothing
+                _speed_SA_in = np.divide(np.diff(Data_SA_in[1]), np.diff(Data_SA_in[0]))
+                _speed_SB_in = np.divide(np.diff(Data_SB_in[1]), np.diff(Data_SB_in[0]))
+
+                _speed_SA_out = np.divide(np.diff(Data_SA_out[1]), np.diff(Data_SA_out[0]))
+                _speed_SB_out = np.divide(np.diff(Data_SB_out[1]), np.diff(Data_SB_out[0]))
+
+                N = 8
+                _speed_SA_in = np.convolve(_speed_SA_in,np.ones((N,)) / N, mode='valid')
+                _speed_SB_in = np.convolve(_speed_SB_in, np.ones((N,)) / N, mode='valid')
+                _speed_SA_out = np.convolve(_speed_SA_out, np.ones((N,)) / N, mode='valid')
+                _speed_SB_out = np.convolve(_speed_SB_out, np.ones((N,)) / N, mode='valid')
+
+
+                #self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
+                #                           TimeSA_in,
+                #                           TimeSA_out,
+                #                           TimeSB_in,
+                #                           TimeSB_out)
+
+                self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
+                                           x1=Data_SA_in[0],
+                                           y1=Data_SA_in[1],
+                                           x2=Data_SA_out[0],
+                                           y2=Data_SA_out[1],
+                                           x1_2=Data_SB_in[0],
+                                           y1_2=Data_SB_in[1],
+                                           x2_2=Data_SB_out[0],
+                                           y2_2=Data_SB_out[1])
+
+                self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
+                                           x1=cut(2, Data_SA_in[0][0:len(_speed_SA_in)]),
+                                           y1=cut(2, _speed_SA_in),
+                                           x2=cut(2, Data_SA_out[0][0:len(_speed_SA_out)]),
+                                           y2=cut(2, _speed_SA_out),
+                                           x1_2=cut(2, Data_SB_in[0][0:len(_speed_SB_in)]),
+                                           y1_2=cut(2, _speed_SB_in),
+                                           x2_2=cut(2, Data_SB_out[0][0:len(_speed_SB_out)]),
+                                           y2_2=cut(2, _speed_SB_out))
+
+
+                self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
+                                                 x1=Data_SA_in[1],
+                                                 y1=1e6*_eccentricity_in,
+                                                 x2=np.pi/2 - Data_SA_out[1],
+                                                 y2=-1e6*_eccentricity_out,
+                                                 x1_2= [0, 0],
+                                                 y1_2= [0, 0],
+                                                 x2_2= [0, 0],
+                                                 y2_2= [0, 0])
+
+                self.parent.LogDialog.add(self.actual_TDMS_folder.split('/')[::-1][0] + '/' + test[0][0] + ' processed', 'info')
+
+            else:
+                if data__s_a_in == -1:
+                    self.parent.LogDialog.add('TDMS file not loaded because of a key error - try to set [LabView output] in the parameters file', 'error')
+
+                elif data__s_a_in == -2:
+                    self.parent.LogDialog.add('One of the range specified is out of data scope - try to set [LabView output] in the parameters file', 'error')
+
+    def update_calibration_list(self,i):
+        try:
+            full_directory = self.directory + self.CalibrationInformation.scanner_selection_cb.currentText() + '/RawData'
+            self.CalibrationInformation.calibration_selection_cb.clear()
+            if os.path.exists(full_directory):
+                folder_list = os.listdir(full_directory)
+                self.CalibrationInformation.calibration_selection_cb.addItem('Select Calibration:')
+                self.CalibrationInformation.calibration_selection_cb.addItems(folder_list)
+                self.CalibrationInformation.calibration_selection_cb.setEnabled(True)
+            else:
+                self.CalibrationInformation.calibration_selection_cb.setEnabled(False)
+        except:
+            print('Error when indexing processed calibrations folders')
+
+    def set_PROCESSED_folder_v2(self):
+        try:
+            full_directory_processed = self.directory + self.CalibrationInformation.scanner_selection_cb.currentText() + '/ProcessedData/' + self.CalibrationInformation.calibration_selection_cb.currentText() + ' PROCESSED'
+            self.actual_PROCESSED_folder = full_directory_processed
+            self.actual_destination_folder = self.directory + self.CalibrationInformation.scanner_selection_cb.currentText() + '/ProcessedData'
+
+            if os.path.exists(full_directory_processed):
+                self.CalibrationInformation.import_button.setEnabled(True)
+            else:
+                self.CalibrationInformation.import_button.setEnabled(False)
+
+            full_directory_tdms = self.directory + self.CalibrationInformation.scanner_selection_cb.currentText() + '/RawData/' + self.CalibrationInformation.calibration_selection_cb.currentText()
+            self.actual_TDMS_folder = full_directory_tdms
+
+            if os.path.exists(full_directory_tdms):
+                self.CalibrationInformation.testparam_button.setEnabled(True)
+                self.CalibrationInformation.processcalibration_button.setEnabled(True)
+            else:
+                self.CalibrationInformation.testparam_button.setEnabled(False)
+                self.CalibrationInformation.processcalibration_button.setEnabled(False)
+
+        except:
+            print('Error when defining Processed or TDMS folder: Check that both folders for the same calibration exists!')
+
     def select_index(self, index):
 
         self.actual_index = index.row()
         self.actualise_not_folder_dependant_plot()
-        self.TabWidgetPlotting.tab_OPS_processing.reset()
-
-        self.parent.LogDialog.add(self.actual_PROCESSED_folder.split('/')[::-1][0] + ' - scan at index ' + str(self.actual_index) +  ' loaded', 'info')
+        #self.TabWidgetPlotting.tab_OPS_processing.reset()
+        #self.parent.LogDialog.add(self.actual_PROCESSED_folder.split('/')[::-1][0] + ' - scan at index ' + str(self.actual_index) +  ' loaded', 'info')
 
     def actualise_all(self):
-
         info_set_bool = self.CalibrationInformation.set_PROCESSED_folder(self.actual_PROCESSED_folder)
 
         if info_set_bool == -1:
@@ -141,55 +399,86 @@ class QProcessedAnalysisTab(QWidget):
 
             self.actualise_file_table()
 
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
-                                       x1=self.calibration.time_IN_SA[self.actual_index],
-                                       y1=self.calibration.angular_position_SA_IN[self.actual_index],
-                                       x2=self.calibration.time_OUT_SA[self.actual_index],
-                                       y2=self.calibration.angular_position_SA_OUT[self.actual_index],
-                                       x1_2=self.calibration.time_IN_SB[self.actual_index],
-                                       y1_2=self.calibration.angular_position_SB_IN[self.actual_index],
-                                       x2_2=self.calibration.time_OUT_SB[self.actual_index],
-                                       y2_2=self.calibration.angular_position_SB_OUT[self.actual_index])
+            # OUT POSITIONS CORRECTION:
+            # -------------------------
+            self.calibration.occlusion_OUT = np.pi/2 - self.calibration.occlusion_OUT
+            self.calibration.angular_position_SA_OUT = np.pi/2 - self.calibration.angular_position_SA_OUT
+            self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
 
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
-                                       x1=cut(2, self.calibration.time_IN_SA[self.actual_index][
-                                                 0:self.calibration.time_IN_SA[self.actual_index].size - 1]),
-                                       y1=cut(2, self.calibration.speed_IN_SA[self.actual_index]),
-                                       x2=cut(2, self.calibration.time_OUT_SA[self.actual_index][
-                                                 0:self.calibration.time_OUT_SA[self.actual_index].size - 1]),
-                                       y2=cut(2, self.calibration.speed_OUT_SA[self.actual_index]),
-                                       x1_2=cut(2, self.calibration.time_IN_SB[self.actual_index][
-                                                   0:self.calibration.time_IN_SB[self.actual_index].size - 1]),
-                                       y1_2=cut(2, self.calibration.speed_IN_SB[self.actual_index]),
-                                       x2_2=cut(2, self.calibration.time_OUT_SB[self.actual_index][
-                                                   0:self.calibration.time_OUT_SB[self.actual_index].size - 1]),
-                                       y2_2=cut(2, self.calibration.speed_OUT_SB[self.actual_index]))
-
+            # CALIBRATION IN
+            # --------------
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
                                        self.calibration.occlusion_IN,
                                        self.calibration.laser_position_IN, 0, 0)
 
+            # CALIBRATION OUT
+            # ---------------
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_OUT,
                                        self.calibration.occlusion_OUT,
                                        self.calibration.laser_position_OUT, 0, 0)
 
+            # SPEEDS
+            # ------
+            Idxin  = np.where((self.calibration.angular_position_SA_IN[0][0:self.calibration.angular_position_SA_IN[0].size - 20] > np.min(self.calibration.occlusion_IN)) & (self.calibration.angular_position_SA_IN[0][0:self.calibration.angular_position_SA_IN[0].size - 20] < np.max(self.calibration.occlusion_IN)))
+            Idxout = np.where((self.calibration.angular_position_SA_OUT[0][0:self.calibration.angular_position_SA_OUT[0].size - 20] > np.min(self.calibration.occlusion_OUT)) & (self.calibration.angular_position_SA_OUT[0][0:self.calibration.angular_position_SA_OUT[0].size - 20]  < np.max(self.calibration.occlusion_OUT)))
+            Boundin =  [self.calibration.time_IN_SA[0][np.min(Idxin)], self.calibration.time_IN_SA[0][np.max(Idxin)]]
+            Boundout = [self.calibration.time_OUT_SA[0][np.min(Idxout)], self.calibration.time_OUT_SA[0][np.max(Idxout)]]
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_speeds,
+                                             x1=self.calibration.time_IN_SA,
+                                             y1=self.calibration.speed_IN_SA,
+                                             b1=Boundin,
+                                             x2=self.calibration.time_OUT_SA,
+                                             y2=self.calibration.speed_OUT_SA,
+                                             b2=Boundout)
+
+            # POSITIONS
+            # ---------
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_positions,
+                                             x1=self.calibration.time_IN_SA,
+                                             y1=self.calibration.angular_position_SA_IN,
+                                             b1=Boundin,
+                                             x2=self.calibration.time_OUT_SA,
+                                             y2=self.calibration.angular_position_SA_OUT,
+                                             b2=Boundout)
+
+            # ECCENTRICITIES
+            # --------------
+            Boundin = [np.min(self.calibration.occlusion_IN), np.max(self.calibration.occlusion_IN)]
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_eccentricities,
+                                             x1=self.calibration.angular_position_SA_IN,
+                                             y1=self.calibration.eccentricity_IN,
+                                             b1=Boundin,
+                                             x2=self.calibration.angular_position_SA_OUT,
+                                             y2=self.calibration.eccentricity_OUT,
+                                             b2=Boundin)
+
+            # FIXED POINT CALIBRATION (FPC)
+            # ----------------------------
+            self.actualise_single_QTab(self.TabWidgetPlotting.tab_fpc,
+                                            x1 = self.calibration.time_IN_SA,
+                                            y1 = self.calibration.angular_position_SA_IN,
+                                            x2 = self.calibration.time_OUT_SA,
+                                            y2 = self.calibration.angular_position_SA_OUT,
+                                            x1_2 = self.calibration.time_IN_SB,
+                                            y1_2 = self.calibration.angular_position_SB_IN,
+                                            x2_2 = self.calibration.time_OUT_SB,
+                                            y2_2 = self.calibration.angular_position_SB_OUT,
+                                            t1 = self.calibration.occlusion_IN,
+                                            t2 = self.calibration.occlusion_OUT)
+
+            # RELATIVE DISTANCE SIGNATURE PLOT (RDS)
+            # ----------------------------
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
                                        self.calibration.time_IN_SA,
                                        self.calibration.time_OUT_SA,
                                        self.calibration.time_IN_SB,
                                        self.calibration.time_OUT_SB)
 
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
-                                       x1=cut(20, self.calibration.angular_position_SA_IN[self.actual_index]),
-                                       y1=cut(20, self.calibration.eccentricity_IN[self.actual_index]),
-                                       x2=cut(20, self.calibration.angular_position_SA_OUT[self.actual_index]),
-                                       y2=cut(20, self.calibration.eccentricity_OUT[self.actual_index]),
-                                       x1_2=0, y1_2=0, x2_2=0, y2_2=0)
 
-            self.FileDescriptionTable.table.setHorizontalHeaderLabels(['Laser pos\n(LabView)',
-                                                                       'Laser pos\n(Absolute)',
-                                                                       'Scan\nnumber', 'occlusion\nIN (rad)',
-                                                                       'occlusion\nOUT (rad)'])
+            self.FileDescriptionTable.table.setHorizontalHeaderLabels(['Select',
+                                                                       'Laser pos\n [mm]',
+                                                                       'Scan\nnumber', 'occlusion\nIN [rad]',
+                                                                       'occlusion\nOUT [rad]'])
 
             self.TabWidgetPlotting.setCurrentWidget(self.TabWidgetPlotting.tab_calibration_IN)
 
@@ -199,39 +488,48 @@ class QProcessedAnalysisTab(QWidget):
 
     def actualise_not_folder_dependant_plot(self):
 
-        self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
-                                   x1=self.calibration.time_IN_SA[self.actual_index],
-                                   y1=self.calibration.angular_position_SA_IN[self.actual_index],
-                                   x2=self.calibration.time_OUT_SA[self.actual_index],
-                                   y2=self.calibration.angular_position_SA_OUT[self.actual_index],
-                                   x1_2=self.calibration.time_IN_SB[self.actual_index],
-                                   y1_2=self.calibration.angular_position_SB_IN[self.actual_index],
-                                   x2_2=self.calibration.time_OUT_SB[self.actual_index],
-                                   y2_2=self.calibration.angular_position_SB_OUT[self.actual_index])
+        #self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
+        #                           x1=self.calibration.time_IN_SA[self.actual_index],
+        #                           y1=self.calibration.angular_position_SA_IN[self.actual_index],
+        #                           x2=self.calibration.time_OUT_SA[self.actual_index],
+        #                           y2=self.calibration.angular_position_SA_OUT[self.actual_index],
+        #                           x1_2=self.calibration.time_IN_SB[self.actual_index],
+        #                           y1_2=self.calibration.angular_position_SB_IN[self.actual_index],
+        #                           x2_2=self.calibration.time_OUT_SB[self.actual_index],
+        #                           y2_2=self.calibration.angular_position_SB_OUT[self.actual_index])
 
-        self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
-                                   x1=cut(2, self.calibration.time_IN_SA[self.actual_index][
-                                             0:self.calibration.time_IN_SA[self.actual_index].size - 1]),
-                                   y1=cut(2, self.calibration.speed_IN_SA[self.actual_index]),
-                                   x2=cut(2, self.calibration.time_OUT_SA[self.actual_index][
-                                             0:self.calibration.time_OUT_SA[self.actual_index].size - 1]),
-                                   y2=cut(2, self.calibration.speed_OUT_SA[self.actual_index]),
-                                   x1_2=cut(2, self.calibration.time_IN_SB[self.actual_index][
-                                               0:self.calibration.time_IN_SB[self.actual_index].size - 1]),
-                                   y1_2=cut(2, self.calibration.speed_IN_SB[self.actual_index]),
-                                   x2_2=cut(2, self.calibration.time_OUT_SB[self.actual_index][
-                                               0:self.calibration.time_OUT_SB[self.actual_index].size - 1]),
-                                   y2_2=cut(2, self.calibration.speed_OUT_SB[self.actual_index]))
+        #self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
+        #                           x1=cut(2, self.calibration.time_IN_SA[self.actual_index][
+        #                                     0:self.calibration.time_IN_SA[self.actual_index].size - 1]),
+        #                           y1=cut(2, self.calibration.speed_IN_SA[self.actual_index]),
+        #                           x2=cut(2, self.calibration.time_OUT_SA[self.actual_index][
+        #                                     0:self.calibration.time_OUT_SA[self.actual_index].size - 1]),
+        #                           y2=cut(2, self.calibration.speed_OUT_SA[self.actual_index]),
+        #                           x1_2=cut(2, self.calibration.time_IN_SB[self.actual_index][
+        #                                       0:self.calibration.time_IN_SB[self.actual_index].size - 1]),
+        #                           y1_2=cut(2, self.calibration.speed_IN_SB[self.actual_index]),
+        #                           x2_2=cut(2, self.calibration.time_OUT_SB[self.actual_index][
+        #                                       0:self.calibration.time_OUT_SB[self.actual_index].size - 1]),
+        #                           y2_2=cut(2, self.calibration.speed_OUT_SB[self.actual_index]))
 
         self.TabWidgetPlotting.tab_calibration_IN.set_focus(self.actual_index)
         self.TabWidgetPlotting.tab_calibration_OUT.set_focus(self.actual_index)
 
-        self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
-                                   x1=cut(20, self.calibration.angular_position_SA_IN[self.actual_index]),
-                                   y1=cut(20, self.calibration.eccentricity_IN[self.actual_index]),
-                                   x2=cut(20, self.calibration.angular_position_SA_OUT[self.actual_index]),
-                                   y2=cut(20, self.calibration.eccentricity_OUT[self.actual_index]),
-                                   x1_2=0, y1_2=0, x2_2=0, y2_2=0)
+        #self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
+        #                           x1=cut(20, self.calibration.angular_position_SA_IN[self.actual_index]),
+        #                           y1=cut(20, self.calibration.eccentricity_IN[self.actual_index]),
+        #                           x2=cut(20, self.calibration.angular_position_SA_OUT[self.actual_index]),
+        #                           y2=cut(20, self.calibration.eccentricity_OUT[self.actual_index]),
+        #                           x1_2=0, y1_2=0, x2_2=0, y2_2=0)
+
+    def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2):
+        QTab.set_x_IN(x1)
+        QTab.set_y_IN(y1)
+        QTab.set_B_IN(b1)
+        QTab.set_x_OUT(x2)
+        QTab.set_y_OUT(y2)
+        QTab.set_B_OUT(b2)
+        QTab.actualise_ax()
 
     def actualise_single_QTab(self, QTab, x1, y1, x2, y2, x1_2=None, y1_2=None, x2_2=None, y2_2=None, t1=None, t2=None, pd1=None, pd2=None):
 
@@ -263,7 +561,9 @@ class QProcessedAnalysisTab(QWidget):
         parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
         config.read(parameter_file)
-        tank_center = eval(config.get('OPS processing parameters', 'offset_center'))
+        tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
+
+        print(folder)
 
         data = sio.loadmat(folder + '/PROCESSED_IN.mat', struct_as_record=False, squeeze_me=True)
         laser_position = data['laser_position']
@@ -275,7 +575,7 @@ class QProcessedAnalysisTab(QWidget):
         self.FileDescriptionTable.table.setRowCount(laser_position.size)
         self.FileDescriptionTable.table.setColumnCount(5)
 
-        self.FileDescriptionTable.table.horizontalHeader().resizeSection(0, 55)
+        self.FileDescriptionTable.table.horizontalHeader().resizeSection(0, 40)
         self.FileDescriptionTable.table.horizontalHeader().resizeSection(1, 55)
         self.FileDescriptionTable.table.horizontalHeader().resizeSection(2, 40)
         self.FileDescriptionTable.table.horizontalHeader().resizeSection(3, 55)
@@ -290,18 +590,27 @@ class QProcessedAnalysisTab(QWidget):
         font.setPointSize(8)
 
         for i in arange(0, laser_position.size):
-            self.FileDescriptionTable.table.setItem(i, 0, QTableWidgetItem(str(laser_position[i])))
+
+            ChkItem = QTableWidgetItem()
+            ChkItem.setFlags(QtCore.Qt.ItemIsUserCheckable  | QtCore.Qt.ItemIsEnabled)
+            ChkItem.setCheckState(QtCore.Qt.Unchecked)
+
+            self.FileDescriptionTable.table.setItem(i, 0, ChkItem)
+            #self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str(laser_position[i])))
             self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str( - laser_position[i] + tank_center )))
             self.FileDescriptionTable.table.setItem(i, 2, QTableWidgetItem(str(scan_number[i])))
             self.FileDescriptionTable.table.setItem(i, 3, QTableWidgetItem(str(occlusion_IN[i])))
             self.FileDescriptionTable.table.setItem(i, 4, QTableWidgetItem(str(occlusion_OUT[i])))
+
             self.FileDescriptionTable.table.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter)
+            #self.FileDescriptionTable.table.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.FileDescriptionTable.table.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter)
             self.FileDescriptionTable.table.item(i, 2).setTextAlignment(QtCore.Qt.AlignCenter)
             self.FileDescriptionTable.table.item(i, 3).setTextAlignment(QtCore.Qt.AlignCenter)
             self.FileDescriptionTable.table.item(i, 4).setTextAlignment(QtCore.Qt.AlignCenter)
 
             self.FileDescriptionTable.table.item(i, 0).setFont(font)
+            #self.FileDescriptionTable.table.item(i, 1).setFont(font)
             self.FileDescriptionTable.table.item(i, 1).setFont(font)
             self.FileDescriptionTable.table.item(i, 2).setFont(font)
             self.FileDescriptionTable.table.item(i, 3).setFont(font)
@@ -313,23 +622,23 @@ class QProcessedAnalysisTab(QWidget):
             file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 
         if file is not '':
-
+            print(file)
             self.parent.LogDialog.add('Selected file : ' + file, 'info')
 
             info_set_bool = self.CalibrationInformation.set_PROCESSED_folder(file)
 
-            if info_set_bool == -1:
-                self.parent.LogDialog.add('PROCESSED info not found in this folder', 'warning')
+            #if info_set_bool == -1:
+            #    self.parent.LogDialog.add('PROCESSED info not found in this folder', 'warning')
 
-            else:
+            #else:
+            print(file)
+            self.actual_PROCESSED_folder = file
+            self.actual_index = 0
 
-                self.actual_PROCESSED_folder = file
-                self.actual_index = 0
+            if self.actual_PROCESSED_folder.find(self.actual_TDMS_folder.split('/')[::-1][0]) == -1:
+                self.parent.LogDialog.add('TDMS folder name and PROCESSED folder name do not match', 'warning')
 
-                if self.actual_PROCESSED_folder.find(self.actual_TDMS_folder.split('/')[::-1][0]) == -1:
-                    self.parent.LogDialog.add('TDMS folder name and PROCESSED folder name do not match', 'warning')
-
-                self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
+            self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
 
     def set_TDMS_folder(self, file=None):
 

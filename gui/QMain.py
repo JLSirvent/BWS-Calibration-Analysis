@@ -65,7 +65,7 @@ class QMain(QWidget):
 
         self.CERN_logo_image = QtGui.QPixmap(utils.resource_path("images/cern_logo.jpg"))
 
-        self.CERN_logo_image = self.CERN_logo_image.scaledToHeight(60, QtCore.Qt.SmoothTransformation);
+        self.CERN_logo_image = self.CERN_logo_image.scaledToHeight(60, QtCore.Qt.SmoothTransformation)
 
         self.CERN_logo.setPixmap(self.CERN_logo_image)
 
@@ -84,7 +84,6 @@ class QMain(QWidget):
         self.global_tab.addTab(self.MultipleCalibrationAnalysis, "Multiple calibration analysis")
         self.global_tab.addTab(self.SingleScanAnalysis, "Scan raw data analysis")
         self.global_tab.addTab(self.TabFileProcessing, "Calibration processing")
-
         self.mainLayout.addLayout(self.header)
         self.mainLayout.addWidget(self.global_tab)
         self.mainLayout.addWidget(self.LogDialog)
@@ -95,6 +94,9 @@ class QMain(QWidget):
         self.setWindowTitle('OPS Processing')
         self.setMinimumSize(1200, 900)
 
+    def closeEvent(self, event):
+        print("Closing the app")
+        self.deleteLater()
 
 def main():
     app = QApplication(sys.argv)

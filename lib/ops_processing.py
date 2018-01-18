@@ -248,7 +248,7 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
         filtered_data = utils.butter_lowpass_filter(data, peaks_detection_filter_freq, sampling_frequency, order=5)
 
         # Modif by Jose (to avoid false peaks detection)
-        margin = 1e-3  # temporal window around max in seconds
+        margin = 3e-3  # temporal window around min in seconds
 
         valmax = np.amax(filtered_data)
         #print(valmax)
@@ -319,10 +319,10 @@ def process_complete_calibration(raw_data_folder, destination_folder):
     convert_raw_data = utils.CreateRawDataFolder(raw_data_folder, destination_folder)
     convert_raw_data.run()
 
-    raw_data_processing = ProcessRawData(destination_folder + '/RAW_DATA/RAW_OUT', destination_folder)
+    raw_data_processing = ProcessRawData(destination_folder + '\RAW_DATA\RAW_OUT', destination_folder)
     raw_data_processing.run()
 
-    raw_data_processing = ProcessRawData(destination_folder + '/RAW_DATA/RAW_IN', destination_folder)
+    raw_data_processing = ProcessRawData(destination_folder + '\RAW_DATA\RAW_IN', destination_folder)
     raw_data_processing.run()
 
     utils.create_processed_data_folder(raw_data_folder, destination_folder, force_overwrite='y')
@@ -423,12 +423,11 @@ class ProcessRawData(QtCore.QThread):
         parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
         config.read(parameter_file)
-        IN_55rs_range = eval(config.get('OPS processing parameters', '55rs_IN_range'))
-        IN_133rs_range = eval(config.get('OPS processing parameters', '133rs_IN_range'))
-        OUT_55rs_range = eval(config.get('OPS processing parameters', '55rs_OUT_range'))
-        OUT_133rs_range = eval(config.get('OPS processing parameters', '133rs_OUT_range'))
+        IN_range = eval(config.get('OPS processing parameters', 'IN_range'))
+        OUT_range = eval(config.get('OPS processing parameters', 'OUT_range'))
         sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
         process_occlusions = eval(config.get('OPS processing parameters','Process_Occlusions'))
+        compensate_eccentricity =  eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
 
         #mat_files, dir_path = utils.mat_list_from_folder(self.raw_data_folder)
         mat_files = utils.mat_list_from_folder_sorted(self.raw_data_folder)
@@ -441,17 +440,11 @@ class ProcessRawData(QtCore.QThread):
 
         if IN is True:
             print('------- OPS Processing IN -------')
-            if speed == 55:
-                StartTime = IN_55rs_range[0]
-            elif speed == 133:
-                StartTime = IN_133rs_range[0]
+            StartTime = IN_range[0]
             self.notifyState.emit('OPS Processing IN')
             time.sleep(0.1)
         elif OUT is True:
-            if speed == 55:
-                StartTime = OUT_55rs_range[0]
-            elif speed == 133:
-                StartTime = OUT_133rs_range[0]
+            StartTime = OUT_range[0]
             print('------- OPS Processing OUT -------')
             self.notifyState.emit('OPS Processing OUT')
             time.sleep(0.1)
@@ -498,10 +491,13 @@ class ProcessRawData(QtCore.QThread):
 
                 _eccentricity_B = np.subtract(Data_SB[1], Data_SA_R[1]) / 2
 
-                # Data is now uncorrected from eccentricity
-                #Data_SA[1] = np.subtract(Data_SA[1], _eccentricity)
-                #Data_SB[1] = np.subtract(Data_SB[1], _eccentricity_B)
-                #Data_SB_R[1] = np.add(Data_SB_R[1], _eccentricity)
+                # Decide Eccentricity compensation or not
+                # ---------------------------------------
+                if compensate_eccentricity is True:
+                    Data_SA[1] = np.subtract(Data_SA[1], _eccentricity)
+                    Data_SB[1] = np.subtract(Data_SB[1], _eccentricity_B)
+                    Data_SB_R[1] = np.add(Data_SB_R[1], _eccentricity)
+                # ---------------------------------------
 
                 # OPS data saving in list
                 angular_position_SA.append(Data_SA[1])
@@ -533,7 +529,7 @@ class ProcessRawData(QtCore.QThread):
                     #occ1 = Data_SA_R[1][int(occlusions[0])]
                     #occ2 = Data_SA_R[1][int(occlusions[1])]
 
-                    # -- New Method :Slightly faster --
+                    # -- New Method: Slightly faster --
                     finterp = interp1d(Data_SA[0],Data_SA[1])
                     occ1 = finterp(_time_PD[int(occlusions[0])])
                     occ2 = finterp(_time_PD[int(occlusions[1])])
@@ -543,7 +539,7 @@ class ProcessRawData(QtCore.QThread):
                 else:
                     _occlusion = StartTime + 0.02
 
-                test_range = np.array([0, np.pi])
+                #test_range = np.array([0, np.pi])
 
                 # if _occlusion < test_range[0] or _occlusion > test_range[1]:
                 #     log.log_peaks_out_of_range(test_range, _occlusion, mat_file, IN)
@@ -565,7 +561,7 @@ class ProcessRawData(QtCore.QThread):
 
         if IN is True:
             filename = 'PROCESSED_IN.mat'
-            'done IN'
+
         elif OUT is True:
             filename = 'PROCESSED_OUT.mat'
 

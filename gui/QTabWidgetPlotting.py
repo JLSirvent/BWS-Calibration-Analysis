@@ -29,9 +29,12 @@ from __future__ import unicode_literals
 import sys
 
 from gui.QTab import QTab
+from gui.QTabEccentricities import QTabEccentricities
+from gui.QTabSpeeds_Positions import QTabSpeeds_Positions
 from gui.QTabCalibration import QTabCalibration
 from gui.QTabOPSProcessing import QTabOPSProcessing
 from gui.QTabRDS import QTabRDS
+from gui.QTabFPC import QTabFPC
 from PyQt5.QtWidgets import QTabWidget, QApplication
 
 
@@ -40,6 +43,14 @@ class QTabWidgetPlotting(QTabWidget):
     def __init__(self, parent=None):
 
         super(QTabWidgetPlotting, self).__init__(parent)
+
+        self.tab_calibration_IN = QTabCalibration('IN')
+        self.tab_calibration_OUT = QTabCalibration('OUT')
+        self.tab_speeds = QTabSpeeds_Positions('Speed ','Time [ms]','Angular speed [rad/s]',8)
+        self.tab_positions = QTabSpeeds_Positions('Position ', 'Time [ms]', 'Angular Position [rad]', 1)
+        self.tab_eccentricities = QTabEccentricities()
+        self.tab_fpc = QTabFPC()
+
 
         self.tab_position = QTab('Disk position',
                                  'Time (s)',
@@ -51,11 +62,8 @@ class QTabWidgetPlotting(QTabWidget):
 
         self.tab_eccentricity = QTab('Position error and eccentricity compensation',
                                      'Angular position (rad)',
-                                     'Position error (rad)')
+                                     'Position error (urad)')
 
-        self.tab_calibration_IN = QTabCalibration('IN')
-
-        self.tab_calibration_OUT = QTabCalibration('OUT')
 
         self.tab_OPS_processing = QTabOPSProcessing()
 
@@ -63,6 +71,11 @@ class QTabWidgetPlotting(QTabWidget):
 
         self.addTab(self.tab_calibration_IN, "Calibration - IN")
         self.addTab(self.tab_calibration_OUT, "Calibration - OUT")
+        self.addTab(self.tab_speeds,"Speeds")
+        self.addTab(self.tab_positions,"Positions")
+        self.addTab(self.tab_eccentricities,"Eccentricities")
+        self.addTab(self.tab_fpc,'FPC')
+
         self.addTab(self.tab_position, "Disk position")
         self.addTab(self.tab_speed, "Speed")
         self.addTab(self.tab_eccentricity, "Eccentricity")

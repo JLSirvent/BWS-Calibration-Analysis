@@ -147,7 +147,7 @@ class plot(mplCanvas):
             ax1.plot(self.x_IN_B, self.y_IN_B, color='#018BCF', linewidth=1)
         except:
             pass
-        ax1.set_xlim([self.x_IN_A[0], self.x_IN_A[::-1][0]])
+        ax1.set_xlim([min(self.x_IN_A), max(self.x_IN_A)])
         ax1.legend(['Sensor A', 'Sensor B'])
         prairie.style(ax1)
         # print(self.x1)
@@ -161,7 +161,7 @@ class plot(mplCanvas):
             ax2.plot(self.x_OUT_B, self.y_OUT_B, color='#CF2A1B', linewidth=1)
         except:
             pass
-        ax2.set_xlim([self.x_OUT_A[0], self.x_OUT_A[::-1][0]])
+        ax2.set_xlim([min(self.x_OUT_A), max(self.x_OUT_A)])
         ax2.legend(['Sensor A', 'Sensor B'])
         prairie.style(ax2)
 

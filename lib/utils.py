@@ -191,8 +191,8 @@ def tdms_list_from_folder(TDMS_folder):
     print()
     return tdms_files, dir_path
 
-
 def mat_list_from_folder_sorted(mat_folder):
+
     new_name = mat_folder.split('file:///', 2)
 
     if len(new_name) == 2:
@@ -202,7 +202,6 @@ def mat_list_from_folder_sorted(mat_folder):
     mat_files.sort(key=os.path.getmtime)
 
     return mat_files
-
 
 def mat_list_from_folder(mat_folder):
     new_name = mat_folder.split('file:///', 2)
@@ -218,7 +217,6 @@ def mat_list_from_folder(mat_folder):
                 mat_files.append(files)
 
     return mat_files, dir_path
-
 
 class CreateRawDataFolder(QtCore.QThread):
     """
@@ -251,10 +249,8 @@ class CreateRawDataFolder(QtCore.QThread):
         config = configparser.RawConfigParser()
         config.read(parameter_file)
         tdms_minimum_size = eval(config.get('OPS processing parameters', 'tdms_minimum_size'))
-        speed = eval(config.get('OPS processing parameters', 'speed'))
         fatigue_test = config.get('OPS processing parameters', 'fatigue_test')
-        offset_center = eval(config.get('OPS processing parameters', 'offset_center'))
-
+        offset_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
         newname = self.TDMS_folder.split('file:///', 2)
 
         if len(newname) == 2:
@@ -535,20 +531,16 @@ def extract_from_tdms(path):
     config.read(parameter_file)
 
     sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
-    speed = eval(config.get('OPS processing parameters', 'speed'))
 
     data__s_a_name = eval(config.get('LabView output', 'data_SA'))
     data__s_b_name = eval(config.get('LabView output', 'data_SB'))
     data__p_d_name = eval(config.get('LabView output', 'data_PD'))
     automatic_ranging_name = eval(config.get('LabView output', 'automatic_ranging'))
 
-    if speed == 133:
-        range_time_in = eval(config.get('OPS processing parameters', '133rs_IN_range'))
-        range_time_out = eval(config.get('OPS processing parameters', '133rs_OUT_range'))
+    range_time_in = eval(config.get('OPS processing parameters', 'IN_range'))
+    range_time_out = eval(config.get('OPS processing parameters', 'OUT_range'))
 
-    elif speed == 55:
-        range_time_in = eval(config.get('OPS processing parameters', '55rs_IN_range'))
-        range_time_out = eval(config.get('OPS processing parameters', '55rs_OUT_range'))
+
 
     if len(data__s_a_name) == 2:
 
@@ -661,14 +653,7 @@ def get_info_from_PROCESSED(path):
     parameter_file = resource_path('data/parameters.cfg')
     config = configparser.RawConfigParser()
     config.read(parameter_file)
-    tank_center = eval(config.get('OPS processing parameters', 'offset_center'))
-
-    folder = path.split('/')[::-1][0]
-
-    if folder.find('133rs') != -1:
-        speed = 133
-    elif folder.find('55rs') != -1:
-        speed = 55
+    tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
     if not os.path.exists(path + '/PROCESSED_IN.mat'):
         return -1
@@ -678,10 +663,11 @@ def get_info_from_PROCESSED(path):
         laser_position = data['laser_position']
         laser_position = - laser_position + tank_center
         number_of_scans = laser_position.size
-        first_position = np.min(laser_position)
-        last_position = np.max(laser_position)
+        first_position = np.max(laser_position)
+        last_position = np.min(laser_position)
+        speed = np.round(np.max(data['speed_SA'][0]))
         scan_per_position = np.where(laser_position == laser_position[0])[0].size
-        step_size = np.abs(laser_position[0] - laser_position[scan_per_position-1])
+        step_size = np.abs(np.mean(np.diff(np.unique(laser_position))))
 
     return speed, number_of_scans, first_position, last_position, step_size, scan_per_position
 

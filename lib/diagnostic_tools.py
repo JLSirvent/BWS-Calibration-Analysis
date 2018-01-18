@@ -73,17 +73,21 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
     means = []
     sigmas = []
 
+    # Data Cleanup
+    data = data[(data >= data_range[0]) & (data <= data_range[1])]
+    # ----
+
+    binshist = np.linspace(data_range[0], data_range[1], 50)
+
     if projected is True:
         parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
         config.read(parameter_file)
         fork_length = eval(config.get('Scanner parameters', 'fork_length'))
 
-
     if axe is None:
-
         data_range = np.asarray(data_range)
-        plt.hist(data, 50, normed=1, alpha=0.75)
+        plt.hist(data, bins=binshist, normed=1, alpha=0.75)
         plt.xlim([data_range[0], data_range[1]])
         (mu, sigma) = norm.fit(data)
         bins = np.arange(data_range[0], data_range[1], (data_range[1]-data_range[0])/500)
@@ -95,9 +99,9 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
 
         data_range = np.asarray(data_range)
         if color is not None:
-            axe.hist(data, 50, normed=1, alpha=0.75, color=color)
+            axe.hist(data, bins=binshist, normed=1, alpha=0.75, color=color)
         else:
-            axe.hist(data, 50, normed=1, alpha=0.75)
+            axe.hist(data, bins=binshist, normed=1, alpha=0.75)
 
         axe.set_xlim([data_range[0], data_range[1]])
         (mu, sigma) = norm.fit(data)
@@ -159,7 +163,7 @@ def plot_calibration(folder_name, in_or_out, save=False, saving_name=None, compl
     config.read(parameter_file)
     positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
     positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-    tank_center = eval(config.get('OPS processing parameters', 'offset_center'))
+    tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
     data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
     occlusion_position = data['occlusion_position']
@@ -318,10 +322,12 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     config.read(parameter_file)
     positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
     positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-    tank_center = eval(config.get('OPS processing parameters', 'offset_center'))
+    tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
     SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
 
     AngularIncrement = 2 * np.pi / SlitsperTurn
+
+    AngularIncrementC = 2 * np.pi / (SlitsperTurn+11)
 
     # IN
     data_IN = sio.loadmat(folder_name + '/' + filenameIN, struct_as_record=False, squeeze_me=True)
@@ -330,7 +336,12 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     scan_number_IN =  data_IN['scan_number']
     idxs_IN = np.argsort(scan_number_IN)
     scan_number_IN= scan_number_IN[idxs_IN]
+
     occlusion_position_IN = occlusion_position_IN[idxs_IN]
+
+    occlusion_position_IN = occlusion_position_IN/AngularIncrement
+    occlusion_position_IN = occlusion_position_IN * AngularIncrementC
+
     laser_position_IN = laser_position_IN[idxs_IN]
     laser_position_IN = -laser_position_IN + tank_center
 
@@ -341,10 +352,14 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     scan_number_OUT = data_OUT['scan_number']
     idxs_OUT = np.argsort(scan_number_OUT)
     occlusion_position_OUT = occlusion_position_OUT[idxs_OUT]
+
+    occlusion_position_OUT = occlusion_position_OUT/AngularIncrement
+    occlusion_position_OUT = occlusion_position_OUT * AngularIncrementC
+
     laser_position_OUT = laser_position_OUT[idxs_OUT]
     scan_number_OUT = scan_number_OUT[idxs_OUT]
     laser_position_OUT = -laser_position_OUT + tank_center
-    occlusion_position_OUT = (np.pi / 2) + 8 * AngularIncrement - occlusion_position_OUT
+    occlusion_position_OUT = (np.pi / 2) + 4.5 * AngularIncrement - occlusion_position_OUT
 
     unique_laser_position = np.unique(laser_position_IN)
     occlusion_position_mean_IN = []
@@ -700,6 +715,108 @@ def plot_all_eccentricity(folder_name, in_or_out, howmuch='all', diagnostic=Fals
     return ax1
 
 
+def plot_all_eccentricityV2(folder_name):
+    """
+          Plot all the eccenticity curve extracted form the OPS processing to see if any jump occured
+
+          Args:
+              folder_name: folder containing PROCESSED_IN and PROCESSED_OUT, the processed data
+              save: save the figure as png (figure will not be displayed if True)
+              saving_name: Name of the png file (without extension)
+          """
+
+    fig = plt.figure(figsize=(11, 5.5))
+    prairie.use()
+
+    ax1 = plt.subplot2grid((2, 3), (0, 0), colspan=2)
+    ax2 = plt.subplot2grid((2, 3), (0, 2), sharex=ax1)
+    ax3 = plt.subplot2grid((2, 3), (1, 0), colspan=2, sharex=ax1,sharey=ax1)
+    ax4 = plt.subplot2grid((2, 3), (1, 2), sharex=ax1,sharey=ax2)
+
+    for i in range(1,3):
+        if i == 1:
+            filename = 'PROCESSED_IN.mat'
+            title = 'IN'
+            ax_all = ax1
+            ax_res = ax2
+            data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
+            eccentricity = data['eccentricity']
+            angular_position_SA = data['angular_position_SA']
+        else:
+            filename = 'PROCESSED_OUT.mat'
+            title = 'OUT'
+            ax_all = ax3
+            ax_res = ax4
+            data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
+            eccentricity = -data['eccentricity']
+            angular_position_SA = (np.pi/2)-data['angular_position_SA']
+
+        off = 100
+        values = range(len(eccentricity)+1)
+        jet = cm = plt.get_cmap('jet')
+        cNorm = colors.Normalize(vmin=0, vmax=values[-1])
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
+
+        ref_ecc = eccentricity[0]
+        ref_ecc = ref_ecc[off:ref_ecc.size - off]
+        ref_pos = angular_position_SA[0]
+        ref_pos = ref_pos[off:ref_pos.size - off]
+        ecc_all = []
+
+        def theor_ecc(x, a, b, c):
+            return a * np.sin(x + b) + c
+
+        popt, pcov = curve_fit(theor_ecc, ref_pos, ref_ecc, bounds=([-100, -100, -100], [100, 100, 100]))
+
+        for ecc, pos in zip(eccentricity, angular_position_SA):
+            ecc = ecc[off:ecc.size - off]
+            pos = pos[off:pos.size - off]
+            ecc = utils.resample(np.array([pos, ecc]), np.array([ref_pos, ref_ecc]))
+            ecc_all.append(ecc[1])
+
+        [ref_ecc, ref_pos] = [eccentricity[0], angular_position_SA[0]]
+
+        deff = []
+        residuals_mean = []
+
+        ax_all.plot(ref_pos, 1e3*theor_ecc(ref_pos, popt[0], popt[1], popt[2]), linewidth=0.5, color='black')
+
+        cnt = 1
+        for ecc, pos in zip(eccentricity, angular_position_SA):
+            colorVal = scalarMap.to_rgba(values[cnt])
+            ecc = ecc[off:ecc.size - off]
+            pos = pos[off:pos.size - off]
+            ax_all.plot(pos, 1e3*ecc, linewidth=0.8, color=colorVal)
+            cnt = cnt + 1
+
+        ax_all.set_title('Position error and eccentricity compensation '+ title + ' - Sensor A', loc='left')
+        ax_all.set_xlabel('Angular position (rad)')
+        ax_all.set_ylabel('Position error (mrad)')
+        ax_all.legend(['Eccentricity global fit', 'Eccentricity profiles (' + str(eccentricity.size) + ')'])
+        prairie.style(ax_all)
+
+        plt.tight_layout()
+
+        cnt = 1
+        for ecc, pos in zip(eccentricity, angular_position_SA):
+            colorVal = scalarMap.to_rgba(values[cnt])
+            ecc = ecc[off:ecc.size - off]
+            pos = pos[off:pos.size - off]
+            residuals = ecc - theor_ecc(pos, popt[0], popt[1], popt[2])
+            ax_res.plot(pos, 1e6*residuals, linewidth=0.2, color=colorVal)
+            residuals_mean.append(np.mean(residuals))
+            cnt = cnt + 1
+
+        ax_res.set_title('Position error after compensation', loc='left')
+        ax_res.set_xlabel('Angular position (rad)')
+        ax_res.set_ylabel('Position error (\u03BCrad)')
+        ax_res.legend(['Residuals profiles (' + str(eccentricity.size) + ')'])
+        prairie.style(ax_res)
+
+    plt.tight_layout()
+    plt.show(block=True)
+
+
 def plot_all_speed(folder_name, in_or_out, save=False, saving_name=None, separate=True):
 
     if separate is True:
@@ -824,6 +941,76 @@ def plot_all_speed(folder_name, in_or_out, save=False, saving_name=None, separat
         plt.show(block=True)
 
 
+def plot_all_speedV2(folder_name):
+
+    fig = plt.figure(figsize=(13, 5.5))
+    prairie.use()
+    ax1 = plt.subplot2grid((1, 2), (0, 0))
+    ax2 = plt.subplot2grid((1, 2), (0, 1), sharey=ax1)
+    for i in range(1,3):
+
+        if i==1:
+            filename = 'PROCESSED_IN.mat'
+            ax_speed = ax1
+            title = 'IN'
+        else:
+            filename = 'PROCESSED_OUT.mat'
+            ax_speed = ax2
+            title = 'OUT'
+
+        data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
+        speed_SA = data['speed_SA']
+        time_SA = data['time_SA']
+
+        #parameter_file = utils.resource_path('data/parameters.cfg')
+        #config = configparser.RawConfigParser()
+        #config.read(parameter_file)
+
+        ref_speed = speed_SA[0]
+        ref_time = time_SA[0]
+        R_speed = []
+        M_speed = ref_speed
+
+        offset = 10
+
+        values = range(len(speed_SA)+1)
+        jet = cm = plt.get_cmap('jet')
+        cNorm = colors.Normalize(vmin=0, vmax=values[-1])
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
+
+        for speed, time in zip(speed_SA, time_SA):
+            speed = speed[offset:(speed.size-offset)]
+            time = time[offset:(time.size - offset - 1)]
+            r_speed = utils.resample(np.array([time, speed]), np.array([ref_time, ref_speed]))
+            M_speed = np.add(r_speed[1][0:M_speed.size], M_speed)
+            M_speed /= 2
+
+        ax_speed.plot(ref_time[0:M_speed.size], M_speed, 'k', linewidth=0.5)
+
+        cnt = 1
+        N = 8
+
+        for speed, time in zip(speed_SA, time_SA):
+            colorVal = scalarMap.to_rgba(values[cnt])
+            speed = speed[offset:(speed.size-offset)]
+            speed_s = np.convolve(speed,np.ones((N,))/N, mode='valid')
+            time = time[offset:(time.size - offset - 1)]
+            r_speed = utils.resample(np.array([time, speed]), np.array([ref_time, ref_speed]))
+            ax_speed.plot(time[np.int(N/2):time.size-np.int(N/2)+1], speed_s, linewidth=0.5, color=colorVal)
+            R_speed.append(np.mean((r_speed[1][0:M_speed.size] - M_speed)[200:M_speed.size-offset-20]))
+            cnt = cnt + 1
+
+        ax_speed.set_title('Speed profiles '+ title, loc='left')
+        ax_speed.set_ylabel('Speed (rad/s)')
+        ax_speed.set_xlabel('Time (s)')
+        ax_speed.legend(['Mean speed', 'Speed profiles (' + str(speed_SA.size) + ')'])
+        ax_speed.set_ylim([0, 150])
+        prairie.style(ax_speed)
+        plt.tight_layout()
+
+    plt.show(block=True)
+
+
 def plot_RDS(folder_name, in_or_out, offset=0, index=None):
     """
         Plot of the relative distance thresholding performed in the OPS processing to correct defaults
@@ -898,8 +1085,8 @@ def plot_all_positions(folder_name, in_or_out, save=False, saving_name=None):
         filename = 'PROCESSED_OUT.mat'
 
     data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
-    angular_position_SA = data['angular_position_SA']
-    time_SA = data['time_SA']
+    angular_position_SA = data['angular_position_SB']
+    time_SA = data['time_SB']
 
     values = range(len(angular_position_SA)+1)
     jet = cm = plt.get_cmap('jet')
@@ -964,15 +1151,22 @@ def plot_all_referencedetections(folder_name, in_or_out,timems=20):
 
     for i in range(0, angular_position_SA.size):
         time_refA.append(time_SA[i][np.where(angular_position_SA[i] > 0)[0][0]])
-        pos_at_timeA.append(angular_position_SA[i][(np.where(time_SA[i] > timems / 1000)[0][0])])
-        laser_posA.append(laser_position[i])
-        scan_numA.append(scan_number[i])
+        try:
+            pos_at_timeA.append(angular_position_SA[i][(np.where(time_SA[i] > timems / 1000)[0][0])])
+        except:
+            print('ReferencesError A')
+    #    laser_posA.append(laser_position[i])
+    #    scan_numA.append(scan_number[i])
 
     for i in range(0, angular_position_SB.size):
         time_refB.append(time_SB[i][np.where(angular_position_SB[i] > 0)[0][0]])
-        pos_at_timeB.append(angular_position_SB[i][(np.where(time_SB[i] > timems / 1000)[0][0])])
-        laser_posB.append(laser_position[i])
-        scan_numB.append(scan_number[i])
+        try:
+            pos_at_timeB.append(angular_position_SB[i][(np.where(time_SB[i] > timems / 1000)[0][0])])
+        except:
+            print('ReferencesError A')
+
+    #    laser_posB.append(laser_position[i])
+    #    scan_numB.append(scan_number[i])
 
     #total_scan_num = []
     #for i in range(0,laser_pos.size):
@@ -986,21 +1180,7 @@ def plot_all_referencedetections(folder_name, in_or_out,timems=20):
     ax1.set_title('Position at a given time' + in_or_out + ' ' + str(timems) + 'ms', loc='left')
     ax1.set_ylabel('Angular Position (deg)')
     ax1.set_xlabel('Scan Number')
-    #ax1.set_ylim(ylimits)
 
-    #make_histogram(time_ref,ylimits, 'ms', axe=ax2, color='b')
-    #ax2.set_title('Histogramming', loc='left')
-    #ax2.set_xlabel('Time (ms)')
-    #ax2.set_ylabel('Norm. Counts')
-
-
-    #prairie.style(ax1)
-
-
-
-    #fig = plt.figure(figsize=(8, 8))
-    #fig.suptitle('Angular Position on Laser Crossing Vs Scan Number', fontsize=14, fontweight='bold')
-    #ax2 = fig.add_subplot(111)
     if in_or_out is 'OUT':
         occlusion_position = np.pi/2 - occlusion_position
 

@@ -28,7 +28,9 @@ from __future__ import unicode_literals
 
 from lib import utils
 from gui import QFolderSelectionWidget
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar
+import configparser
+import os
 
 
 class QCalibrationInformation(QWidget):
@@ -50,13 +52,42 @@ class QCalibrationInformation(QWidget):
         self.processed_data_folder = 0
         self.tdms_data_folder = 0
 
+        self.scanner_selection_cb = QComboBox()
+        self.calibration_selection_cb = QComboBox()
+
+        self.setparam_button = QPushButton('Set param',self)
+        self.testparam_button = QPushButton('Test param', self)
+        self.processcalibration_button = QPushButton('PROCESS calibration',self)
+        self.import_button = QPushButton('IMPORT calibration',self)
+
         self.processed_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('PROCESSED folder:')
         self.tdms_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('TDMS folder:', button=False)
         self.parameters_file_selection = QFolderSelectionWidget.QFolderSelectionWidget('Parameters file:', button=False)
-        main_layout.addWidget(self.processed_data_selection)
+
+        self.import_box = QGroupBox('Calibration Selection')
+
+        self.import_box_layout = QVBoxLayout(self)
+        self.import_box_layout.addStretch(1)
+        self.import_box_layout.addWidget(self.scanner_selection_cb)
+        self.import_box_layout.addWidget(self.calibration_selection_cb)
+
+        self.import_box_layout2 = QHBoxLayout(self)
+        self.import_box_layout2.addWidget(self.setparam_button)
+        self.import_box_layout2.addWidget(self.testparam_button)
+
+        self.import_box_layout.addLayout(self.import_box_layout2)
+
+        self.import_box_layout.addWidget(self.processcalibration_button)
+        self.import_box_layout.addWidget(self.import_button)
+
+        self.import_box.setLayout(self.import_box_layout)
+
+        main_layout.addWidget(self.import_box)
+
+        #main_layout.addWidget(self.processed_data_selection)
 
         self.setFixedWidth(250)
-        self.setFixedHeight(700)
+        #self.setFixedHeight(700)
 
         self.labels_layout = QVBoxLayout()
         self.values_layout = QVBoxLayout()
@@ -98,10 +129,19 @@ class QCalibrationInformation(QWidget):
         self.gen_info_box.setLayout(self.gen_info_layout)
 
         main_layout.addWidget(self.gen_info_box)
-        main_layout.addWidget(self.tdms_data_selection)
-        main_layout.addWidget(self.parameters_file_selection)
 
-        self.setFixedHeight(400)
+        # Progress Bar and labels:
+        self.label_progression = QLabel('Waiting for processing')
+        self.label_file = QLabel('')
+        self.progressBar = QProgressBar(self)
+        self.progressBar.setRange(0, 100)
+
+        main_layout.addWidget(self.label_progression)
+        main_layout.addWidget(self.progressBar)
+        main_layout.addWidget(self.label_file)
+        # ---
+
+        self.setFixedHeight(430)
 
         self.setLayout(main_layout)
 
