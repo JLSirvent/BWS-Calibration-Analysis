@@ -146,6 +146,7 @@ class plot(mplCanvas):
             ax1.set_xlabel('Time (ms)')
             ax1.set_ylabel('Relative distance')
             ax1.set_title('RDS plot - IN', loc='left')
+            ax1.set_ylim(0,5)
             red_patch = mpatches.Patch(color=color_A, label='Sensor A')
             blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
             ax1.legend(handles=[blue_patch, red_patch])
@@ -167,9 +168,10 @@ class plot(mplCanvas):
                 ax2.plot(1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset], rel_distances_B, '.',
                          color=color_B)
 
-            ax2.set_xlabel('Time (' + '\u03BC' + 's)')
+            ax2.set_xlabel('Time (ms)')
             ax2.set_ylabel('Relative distance')
             ax2.set_title('RDS plot - OUT', loc='left')
+            ax2.set_ylim(0,5)
             red_patch = mpatches.Patch(color=color_A, label='Sensor A')
             blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
             ax2.legend(handles=[blue_patch, red_patch])

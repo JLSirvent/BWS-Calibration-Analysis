@@ -25,6 +25,7 @@
 
 
 import scipy.io as sio
+import numpy as np
 
 
 class Calibration:
@@ -48,6 +49,12 @@ class Calibration:
             self.speed_IN_SB = data['speed_SB']
             self.occlusion_IN = data['occlusion_position']
             self.laser_position_IN = data['laser_position']
+            self.scan_number_IN = data['scan_number']
+
+            try:
+                self.data_valid_IN = data['data_valid']
+            except:
+                self.data_valid_IN = np.ones(data['laser_position'].size)
 
             data = sio.loadmat(folder + '/PROCESSED_OUT.mat', struct_as_record=False, squeeze_me=True)
             self.eccentricity_OUT = data['eccentricity']
@@ -59,6 +66,17 @@ class Calibration:
             self.speed_OUT_SB = data['speed_SB']
             self.occlusion_OUT = data['occlusion_position']
             self.laser_position_OUT = data['laser_position']
+            self.scan_number_OUT = data['scan_number']
+
+            try:
+                self.data_valid_OUT = data['data_valid']
+            except:
+                self.data_valid_OUT = np.ones(data['laser_position'].size)
+
+            print('fine importation')
+
+            self.data_valid=np.zeros(data['laser_position'].size)
+            self.data_valid[np.where((self.data_valid_IN == 1)&(self.data_valid_IN == 1))] = 1
 
         else:
 
@@ -80,5 +98,6 @@ class Calibration:
             self.speed_OUT_SB = 0
             self.occlusion_OUT = 0
             self.laser_position_OUT = 0
+            self.data_valid = 0
 
 

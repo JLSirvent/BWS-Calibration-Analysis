@@ -28,12 +28,13 @@ from __future__ import unicode_literals
 
 import os
 import sys
+import configparser
+
+from lib import utils
 from numpy import arange
-
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem
-
 from gui import QFolderSelectionWidget
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem, QComboBox, QGroupBox, QListWidget
 
 
 def cut(off, data):
@@ -52,51 +53,12 @@ class QMultipleFolderSelection(QWidget):
         self.parent = parent
 
         self.folder_selection = QFolderSelectionFrom()
-        self.button_layout = QHBoxLayout()
-        self.button_layout.setContentsMargins(0, 0, 0, 0)
-        self.button_layout.setSpacing(0)
-
-        self.plus_minus_layout = QHBoxLayout()
-
-        self.append_button = QPushButton('+')
-        self.append_button.setFixedSize(25, 25)
-        self.retire_button = QPushButton('-')
-        self.retire_button.setFixedSize(25, 25)
-
-        self.plus_minus_layout.addWidget(self.append_button)
-        self.plus_minus_layout.addWidget(self.retire_button)
-
-        self.append_all_button = QPushButton('all')
-        self.append_all_button.setFixedSize(40, 25)
-        self.reset_button = QPushButton('reset')
-        self.reset_button.setFixedSize(50, 25)
-
-        self.plus_minus_layout.addWidget(self.append_all_button)
-        self.plus_minus_layout.addWidget(self.reset_button)
-        self.button_layout.addLayout(self.plus_minus_layout)
-        self.plus_minus_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.folder_to = QFolderSelectionTo()
-
-        self.actual_selected_folder_from = ''
 
         self.mainLayout = QVBoxLayout()
-
-        self.folder_selection.folder_from.label_select_folder.selectionChanged.connect(self.set_actual_folder)
-        self.folder_selection.folder_from.button_select_folder.clicked.connect(self.folder_selection.populate)
-        self.folder_selection.folder_table_from.clicked.connect(self.set_actual_selected_folder)
-
-        self.append_button.clicked.connect(self.append_folder_to)
-        self.retire_button.clicked.connect(self.retire_folder_to)
-        self.append_all_button.clicked.connect(self.append_all_folder_to)
-        self.reset_button.clicked.connect(self.folder_to.reset)
-
         self.mainLayout.addWidget(self.folder_selection)
-        self.mainLayout.addWidget(self.folder_to)
-        self.mainLayout.addLayout(self.button_layout)
 
         self.setFixedWidth(250)
-        self.setFixedHeight(300)
+        self.setFixedHeight(250)
 
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
 
@@ -108,7 +70,6 @@ class QMultipleFolderSelection(QWidget):
             file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 
         if file is not '':
-
             self.folder_selection.set_actual_folder(file)
 
     def append_folder_to(self):
@@ -141,127 +102,96 @@ class QFolderSelectionFrom(QWidget):
 
         self.actual_folder = ''
         self.subfolder_list = ''
+        self.actual_calibration_folder = ''
+        self.calibration_list = []
 
-        self.folder_from = QFolderSelectionWidget.QFolderSelectionWidget('Search in Folder :')
-        self.folder_table_from = QTableWidget()
+        # ADDING COMBO BOX WITH AVAILABLE SCANNERS
+        # ---------------------------------------------
+        # We use a parameter file
+        parameter_file = utils.resource_path('data/parameters.cfg')
+        config = configparser.RawConfigParser()
+        config.read(parameter_file)
+        self.directory = eval(config.get('Application parameters', 'CalibrationsDirectory'))
 
-        self.folder_table_from.verticalHeader().hide()
-        self.folder_table_from.horizontalHeader().hide()
-        self.folder_table_from.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.folder_table_from.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.folder_table_from.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        self.folder_table_from.horizontalHeader().setFont(QtGui.QFont('Arial', 6))
+        # Actions
+        folder_list = os.listdir(self.directory)
+        self.scanner_selection_cb = QComboBox()
 
-        self.mainLayout.addWidget(self.folder_from)
-        self.mainLayout.addWidget(self.folder_table_from)
+        self.scanner_selection_cb.addItem('Select Scanner:')
+        self.scanner_selection_cb.addItems(folder_list)
+        self.scanner_selection_cb.currentIndexChanged.connect(self.set_actual_scanner_folder)
 
-        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.calibration_selection_cb = QComboBox()
+        self.calibration_selection_cb.setEnabled(False)
+        self.calibration_selection_cb.currentIndexChanged.connect(self.set_actual_calibration_folder)
 
-        self.setLayout(self.mainLayout)
+        self.addButton = QPushButton('Add')
+        self.addButton.setFixedSize(50, 25)
+        self.addButton.clicked.connect(self.add_calibration_to_list)
 
-    def return_selected_item_path(self):
-        pass
+        self.clearButton = QPushButton('Clear')
+        self.clearButton.clicked.connect(self.clear_calibration_list)
+        self.clearButton.setFixedSize(50, 25)
 
-    def populate(self):
+        self.calibration_list_widget = QListWidget()
+        self.calibration_list_widget.resize(300,120)
 
-        if os.path.exists(self.actual_folder):
-            self.subfolder_list = [x[0] for x in os.walk(self.actual_folder)]
-            self.subfolder_list = self.subfolder_list[1::]
+        self.ProcessButton = QPushButton('PROCESS analysis')
+        # ---------------------------------------------
 
-            self.folder_table_from.setRowCount(len(self.subfolder_list))
-            self.folder_table_from.setColumnCount(1)
-            self.folder_table_from.horizontalHeader().resizeSection(0, 280)
+        self.select_box = QGroupBox('Calibrations Selection')
+        self.select_box_layout = QVBoxLayout(self)
+        self.select_box_layout.addStretch(1)
+        self.select_box_layout.addWidget(self.scanner_selection_cb)
+        self.select_box_layout.addWidget(self.calibration_selection_cb)
 
-            for i in arange(0, len(self.subfolder_list)):
-                self.folder_table_from.setItem(i, 0, QTableWidgetItem(str(self.subfolder_list[i].split('\\')[::-1][0])))
-                self.folder_table_from.item(i, 0).setTextAlignment(QtCore.Qt.AlignVCenter)
-                self.folder_table_from.item(i, 0).setFont(QtGui.QFont('Arial', 6))
-                self.folder_table_from.verticalHeader().resizeSection(i, 20)
+        self.select_box_layout2 = QHBoxLayout(self)
+        self.select_box_layout2.addWidget(self.addButton,0, QtCore.Qt.AlignRight)
+        self.select_box_layout2.addWidget(self.clearButton,0, QtCore.Qt.AlignRight)
 
-        else:
-            pass
+        self.select_box_layout.addLayout(self.select_box_layout2)
+        self.select_box_layout.addWidget(self.calibration_list_widget)
+        self.select_box_layout.addWidget(self.ProcessButton)
 
-    def set_actual_folder(self, folder):
-
-        self.actual_folder = folder
-        self.folder_from.label_select_folder.setText(folder.split('/')[::-1][0])
-
-
-class QFolderSelectionTo(QWidget):
-
-    def __init__(self, parent=None):
-        super(QFolderSelectionTo, self).__init__(parent)
-
-        self.parent = parent
-
-        self.mainLayout = QVBoxLayout()
-
-        self.actual_selected_fodler = 0
-
-        self.subfolder_list = []
-
-        self.folder_table_to = QTableWidget()
-
-        self.folder_table_to.clicked.connect(self.set_actual_selected_folder)
-
-        self.folder_table_to.verticalHeader().hide()
-        self.folder_table_to.horizontalHeader().hide()
-        self.folder_table_to.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.folder_table_to.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.folder_table_to.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        self.folder_table_to.horizontalHeader().setFont(QtGui.QFont('Arial', 6))
-
-        self.mainLayout.addWidget(self.folder_table_to)
-
-        self.mainLayout.setContentsMargins(0, 0, 0, 0)
+        self.select_box.setLayout(self.select_box_layout)
+        self.mainLayout.addWidget(self.select_box)
 
         self.setLayout(self.mainLayout)
 
-    def return_selected_item_path(self):
-        pass
+    def set_actual_scanner_folder(self):
+        try:
+            full_directory = self.directory + self.scanner_selection_cb.currentText() + '/ProcessedData'
+            self.calibration_selection_cb.clear()
+            if os.path.exists(full_directory):
+                folder_list = os.listdir(full_directory)
+                self.calibration_selection_cb.addItem('Select Calibration:')
+                for folder in folder_list:
+                    self.calibration_selection_cb.addItem(folder.split(' ')[0])
+                self.calibration_selection_cb.setEnabled(True)
+        except:
+            print('Error set_actual_scanner_folder')
 
-    def append(self, folder):
+    def set_actual_calibration_folder(self):
+        try:
+            full_directory = self.directory + self.scanner_selection_cb.currentText() + '/ProcessedData/' + self.calibration_selection_cb.currentText() + ' PROCESSED'
+            if os.path.exists(full_directory):
+                self.actual_calibration_folder = full_directory
+        except:
+            print('Error set_actual_calibration_folder')
 
-        if folder not in self.subfolder_list:
+    def add_calibration_to_list(self):
+        self.calibration_list.append(self.actual_calibration_folder)
+        self.update_calibration_list()
 
-            self.subfolder_list.append(folder)
+    def clear_calibration_list(self):
+        self.calibration_list = []
+        self.update_calibration_list()
 
-            self.actualise()
-
-    def reset(self):
-
-        self.folder_table_to.reset()
-
-    def set_actual_selected_folder(self, index):
-
-        self.actual_selected_fodler = index.row()
-
-    def actualise(self):
-
-        self.folder_table_to.setRowCount(len(self.subfolder_list))
-        self.folder_table_to.setColumnCount(1)
-        self.folder_table_to.horizontalHeader().resizeSection(0, 280)
-
-        for i in arange(0, len(self.subfolder_list)):
-            self.folder_table_to.setItem(i, 0,
-                                         QTableWidgetItem(str(self.subfolder_list[i].split('\\')[::-1][0])))
-            self.folder_table_to.item(i, 0).setTextAlignment(QtCore.Qt.AlignVCenter)
-            self.folder_table_to.item(i, 0).setFont(QtGui.QFont('Arial', 6))
-            self.folder_table_to.verticalHeader().resizeSection(i, 20)
-
-    def retire_actual(self):
-
-        if self.actual_selected_fodler < len(self.subfolder_list):
-            self.subfolder_list.pop(self.actual_selected_fodler)
-            self.actualise()
-
-    def reset(self):
-
-        self.actual_selected_fodler = 0
-        self.subfolder_list = []
-        self.folder_table_to.reset()
-        self.actualise()
-
+    def update_calibration_list(self):
+        self.calibration_list_widget.clear()
+        for calibration in self.calibration_list:
+            CalSplit = calibration.split('/ProcessedData/')
+            self.calibration_list_widget.addItem(CalSplit[1].split(' PROCESSED')[0])
 
 def main():
     app = QApplication(sys.argv)

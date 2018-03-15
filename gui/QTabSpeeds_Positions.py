@@ -162,7 +162,7 @@ class plot(mplCanvas):
                     times = self.times_out
                     speeds = self.speeds_out
 
-                off = 10
+                off = 0
                 values = range(len(speeds) + 1)
                 jet = cm = plt.get_cmap('jet')
                 cNorm = colors.Normalize(vmin=0, vmax=values[-1])
@@ -185,7 +185,6 @@ class plot(mplCanvas):
                 prairie.style(ax_all)
 
             self.fig.tight_layout()
-            #plt.tight_layout()
 
         except:
             print("Error Speeds_Positions!")

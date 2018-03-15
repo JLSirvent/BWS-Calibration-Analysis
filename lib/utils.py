@@ -300,7 +300,6 @@ class CreateRawDataFolder(QtCore.QThread):
                         laser_position = offset_center
                         scan_number = int(eval(tdms_file.split('__', 2)[1]))
 
-                #data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(dir_path + '/' + tdms_file)
                 data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(tdms_file)
 
 

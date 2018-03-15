@@ -96,8 +96,8 @@ class QMultipleCalibrationAnalysis(QWidget):
 
         self.fit_folder_selection = QFolderSelectionWidget.QFolderSelectionWidget('Use a specific reference folder :',button=False)
         self.fit_folder_selection.label_select_folder.selectionChanged.connect(self.set_reference_folder)
-        self.multipleanalysistab = QTabWidget()
 
+        self.multipleanalysistab = QTabWidget()
         self.multipleanalysistab.addTab(self.PlotTab_IN, 'Comparision analysis IN')
         self.multipleanalysistab.addTab(self.PlotTab_OUT, 'Comparision analysis OUT')
         self.multipleanalysistab.addTab(self.global_histogram_tab, 'Global histogram')
@@ -110,7 +110,7 @@ class QMultipleCalibrationAnalysis(QWidget):
 
         self.main_layout = QHBoxLayout()
 
-        self.folder_selection_layout.addWidget(self.folder_selection)
+        self.folder_selection_layout.addWidget(self.folder_selection, 0, QtCore.Qt.AlignTop)
         self.folder_selection_layout.addWidget(self.fit_folder_selection)
         self.folder_selection_layout.addLayout(self.mean_fit_option_layout)
         self.folder_selection_layout.addLayout(self.personal_fit_option_layout)
@@ -118,7 +118,7 @@ class QMultipleCalibrationAnalysis(QWidget):
         self.folder_selection_layout.addWidget(self.plot_comparision)
 
         self.mainWidget.setLayout(self.folder_selection_layout)
-        self.mainWidget.setFixedWidth(300)
+        self.mainWidget.setFixedWidth(250)
         self.mainWidget.setFixedHeight(500)
 
         self.super_layout = QHBoxLayout()
@@ -129,7 +129,7 @@ class QMultipleCalibrationAnalysis(QWidget):
         self.setLayout(self.super_layout)
 
     def get_folder_list(self):
-        self.subfolders_to_process = self.folder_selection.get_folder_list()
+        self.subfolders_to_process = self.folder_selection.folder_selection.calibration_list
 
     def set_reference_folder(self, file=None):
 
@@ -202,7 +202,7 @@ class QMultipleCalibrationAnalysis(QWidget):
             self.parent.LogDialog.add(progress, 'process')
 
     def plot_comparision_act(self):
-        self.subfolders_to_process = self.folder_selection.get_folder_list()
+        self.get_folder_list()
 
         reference_file = sio.loadmat(self.subfolders_to_process[0] + '/calibration_results.mat', struct_as_record=False, squeeze_me=True)
 
@@ -236,9 +236,9 @@ class QMultipleCalibrationAnalysis(QWidget):
             if ref_ok is True:
                 self.PlotTab_IN.set_folder(self.subfolders_to_process, 'IN')
                 self.PlotTab_OUT.set_folder(self.subfolders_to_process, 'OUT')
-                self.fit_folder_selection.set_folder(new_reference)
-                self.global_histogram_tab.set_folder(self.subfolders_to_process, 'OUT')
-                self.residuals_shape_tab.set_folder(self.subfolders_to_process, 'OUT')
+                #self.fit_folder_selection.set_folder(new_reference)
+                #self.global_histogram_tab.set_folder(self.subfolders_to_process, 'OUT')
+                #self.residuals_shape_tab.set_folder(self.subfolders_to_process, 'OUT')
 
         except KeyError:
             self.parent.LogDialog.add('origin_file Key not found in calibration_results.mat. Tru to reprocess all the files', 'error')

@@ -182,7 +182,7 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     #    print(A[_IndexRef1], A[_IndexRef1 + 1])
 
 
-    # print(Data_Time[IndexRef1] + StartTime)
+    #print(Data_Time[IndexRef1] + StartTime)
 
     Data_Pos = Data_Pos - Data_Pos[IndexRef1]
     Data = np.ndarray((2, Data_Pos.size - 1))
@@ -411,6 +411,7 @@ class ProcessRawData(QtCore.QThread):
         eccentricity = []
         laser_position = []
         occlusion_position = []
+        data_valid = []
         original_time_SB = []
         scan_number = []
         speed_SA = []
@@ -472,7 +473,11 @@ class ProcessRawData(QtCore.QThread):
                 self.notifyFile.emit(mat_file)
                 time.sleep(0.1)
 
-                #mat = sio.loadmat(dir_path + '/' + mat_file)
+                # Laser position and scan number extraction from file name and saving in list
+                _laser_position, _scan_number = utils.find_scan_info(mat_file)
+                scan_number.append(int(_scan_number))
+                laser_position.append(float(_laser_position))
+
                 mat = sio.loadmat(mat_file)
 
                 _data_SA = mat['data_SA'][0]
@@ -480,54 +485,30 @@ class ProcessRawData(QtCore.QThread):
                 _data_PD = mat['data_PD'][0]
 
                 Data_SA = process_position(_data_SA, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, filename=mat_file)
-                Data_SB = process_position(_data_SB, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, filename=mat_file)
+                Data_SB_O = process_position(_data_SB, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, filename=mat_file)
 
-                Data_SB_R = utils.resample(Data_SB, Data_SA)
-                Data_SA_R = utils.resample(Data_SA, Data_SB)
+                Data_SB_R = utils.resample(Data_SB_O, Data_SA)
 
                 # Eccentricity from OPS processing and saving in list
                 _eccentricity = np.subtract(Data_SA[1], Data_SB_R[1]) / 2
-                eccentricity.append(_eccentricity)
-
-                _eccentricity_B = np.subtract(Data_SB[1], Data_SA_R[1]) / 2
 
                 # Decide Eccentricity compensation or not
                 # ---------------------------------------
                 if compensate_eccentricity is True:
                     Data_SA[1] = np.subtract(Data_SA[1], _eccentricity)
-                    Data_SB[1] = np.subtract(Data_SB[1], _eccentricity_B)
-                    Data_SB_R[1] = np.add(Data_SB_R[1], _eccentricity)
+                    Data_SB    = [Data_SA[0], np.subtract(Data_SB_R[1], -_eccentricity)]
+                else:
+                    Data_SB = Data_SB_O
                 # ---------------------------------------
 
-                # OPS data saving in list
-                angular_position_SA.append(Data_SA[1])
-                angular_position_SB.append(Data_SB[1])
-
-                # OPSA time saving in list
-                time_SA.append(Data_SA[0])
-                time_SB.append(Data_SB[0])
-
-                # OPS speed processing and saving in list
+                # OPS speed processing
                 _speed_SA = np.divide(np.diff(Data_SA[1]), np.diff(Data_SA[0]))
                 _speed_SB = np.divide(np.diff(Data_SB[1]), np.diff(Data_SB[0]))
-                speed_SA.append(_speed_SA)
-                speed_SB.append(_speed_SB)
 
                 # Finding of occlusions and saving into a list
                 if process_occlusions is True:
                     _time_PD = StartTime + np.arange(0, _data_PD.size) * 1 / sampling_frequency
                     occlusions = find_occlusions(_data_PD, IN)
-
-                    # if occlusions is -1:
-                    #     log.log_no_peaks(mat_file, IN)
-
-                    # Modified by Jose:
-                    # -----------------
-
-                    # -- Old Method --
-                    #Data_SA_R = utils.resample(Data_SA, np.array([_time_PD, _data_PD]))
-                    #occ1 = Data_SA_R[1][int(occlusions[0])]
-                    #occ2 = Data_SA_R[1][int(occlusions[1])]
 
                     # -- New Method: Slightly faster --
                     finterp = interp1d(Data_SA[0],Data_SA[1])
@@ -539,19 +520,27 @@ class ProcessRawData(QtCore.QThread):
                 else:
                     _occlusion = StartTime + 0.02
 
-                #test_range = np.array([0, np.pi])
-
-                # if _occlusion < test_range[0] or _occlusion > test_range[1]:
-                #     log.log_peaks_out_of_range(test_range, _occlusion, mat_file, IN)
-
+                eccentricity.append(_eccentricity)
+                angular_position_SA.append(Data_SA[1])
+                angular_position_SB.append(Data_SB[1])
+                time_SA.append(Data_SA[0])
+                time_SB.append(Data_SB[0])
+                speed_SA.append(_speed_SA)
+                speed_SB.append(_speed_SB)
                 occlusion_position.append(_occlusion)
-
-                # Laser position and scan number extraction from file name and saving in list
-                _laser_position, _scan_number = utils.find_scan_info(mat_file)
-                scan_number.append(int(_scan_number))
-                laser_position.append(float(_laser_position))
+                data_valid.append(1)
 
             except:
+
+                eccentricity.append([0,1])
+                angular_position_SA.append([0,1])
+                angular_position_SB.append([0,1])
+                time_SA.append([0,1])
+                time_SB.append([0,1])
+                speed_SA.append([0,1])
+                speed_SB.append([0,1])
+                occlusion_position.append(0)
+                data_valid.append(0)
 
                 self.notifyState.emit("Error in file:" + mat_file)
                 self.notifyProgress.emit("Error in file:" + mat_file)
@@ -572,15 +561,13 @@ class ProcessRawData(QtCore.QThread):
 
                     {'angular_position_SA': angular_position_SA,
                      'angular_position_SB': angular_position_SB,
-                     'data_PD': data_PD,
                      'eccentricity': eccentricity,
                      'laser_position': laser_position,
                      'occlusion_position': occlusion_position,
-                     'original_time_SB': original_time_SB,
+                     'data_valid': data_valid,
                      'scan_number': scan_number,
                      'speed_SA': speed_SA,
                      'speed_SB': speed_SB,
-                     'time_PD': time_PD,
                      'time_SA': time_SA,
                      'time_SB': time_SB},
 
@@ -589,11 +576,9 @@ class ProcessRawData(QtCore.QThread):
         # log.log_file_saved(filename)
 
         if IN is True:
-            filename = 'PROCESSED_IN.mat'
             self.notifyState.emit('done IN')
             time.sleep(0.1)
         elif OUT is True:
-            filename = 'PROCESSED_OUT.mat'
             self.notifyState.emit('done OUT')
             time.sleep(0.1)
 
@@ -613,6 +598,7 @@ class ProcessCalibrationResults(QtCore.QThread):
     def run(self):
 
         print('Calibration Results Processing')
+
 
         if self.reference_folder is not None:
             origin_file = self.reference_folder + '/mean_fit.mat'
@@ -637,7 +623,7 @@ class ProcessCalibrationResults(QtCore.QThread):
                 config.read(parameter_file)
                 positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
                 positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-                tank_center = eval(config.get('OPS processing parameters', 'offset_center'))
+                tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
                 if self.reference_file is not None:
                     fit_file = sio.loadmat(self.reference_file, struct_as_record=False, squeeze_me=True)
@@ -650,6 +636,14 @@ class ProcessCalibrationResults(QtCore.QThread):
                 data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
                 occlusion_position = data['occlusion_position']
                 laser_position = data['laser_position']
+                try:
+                    data_valid = data['data_valid']
+                except:
+                    data_valid = np.ones(laser_position.size)
+
+                laser_position=laser_position[np.where(data_valid == 1)]
+                occlusion_position = occlusion_position[np.where(data_valid == 1)]
+
                 idxs = np.argsort(laser_position)
                 occlusion_position = occlusion_position[idxs]
                 laser_position = laser_position[idxs]
@@ -729,6 +723,15 @@ class ProcessCalibrationResults(QtCore.QThread):
                 data = sio.loadmat(folder_name + '/' + filename, struct_as_record=False, squeeze_me=True)
                 occlusion_position = data['occlusion_position']
                 laser_position = data['laser_position']
+
+                try:
+                    data_valid = data['data_valid']
+                except:
+                    data_valid = np.ones(laser_position.size)
+
+                laser_position = laser_position[np.where(data_valid == 1)]
+                occlusion_position = occlusion_position[np.where(data_valid == 1)]
+
                 idxs = np.argsort(laser_position)
                 occlusion_position = occlusion_position[idxs]
                 laser_position = laser_position[idxs]

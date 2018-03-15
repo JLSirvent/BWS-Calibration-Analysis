@@ -7,6 +7,9 @@ import scipy.io as sio
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT as NavigationToolbar
+from matplotlib import cm as cmx
+from matplotlib import pyplot as plt
+from matplotlib import colors as colors
 
 from lib import prairie
 from lib import diagnostic_tools as dt
@@ -68,37 +71,31 @@ class plot(mplCanvas):
         ax2 = self.fig.add_subplot(2, 1, 2)
         labels = []
         dates = []
-        colors = []
         mu = []
         sigma = []
         ranges_0 = []
         ranges_1 = []
 
+        # Color Map
+        values = range(len(self.folders) + 1)
+        jet = cm = plt.get_cmap('jet')
+        cNorm = colors.Normalize(vmin=0, vmax=values[-1])
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
+
+        cnt = 1
         for folder in self.folders:
 
             if os.path.exists(folder + '/calibration_results.mat'):
 
-                date = float(folder.split('/')[::-1][0].split('__')[1].split('_')[2])
                 plot_legend = folder.split('/')[::-1][0].split('__')[1].split('_')[1] + '/' + \
                               folder.split('/')[::-1][0].split('__')[1].split('_')[2]
 
-                color = int(folder.split('/')[::-1][0].split('__')[1].split('_')[2])
-
-                if int(folder.split('/')[::-1][0].split('__')[2].split('_')[0]) <= 12:
-                    plot_legend += ' a.m.'
-                else:
-                    plot_legend += ' p.m.'
-                    date += 0.5
-                    color += 0.5
+                plot_legend += ' ' + folder.split('__')[-1].replace('_',':').split(' ')[0]
 
                 labels.append(plot_legend)
                 data = sio.loadmat(folder + '/calibration_results.mat', struct_as_record=False, squeeze_me=True)
-                dates.append(2 * date)
-                acolor = np.zeros(3)
-                acolor[1] = (day_max - color) / day_max
-                acolor[2] = 0.75
-                acolor[0] = 0.2
-                colors.append(acolor)
+
+                colorVal = scalarMap.to_rgba(values[cnt])
 
                 if self.in_or_out is 'IN':
 
@@ -108,8 +105,8 @@ class plot(mplCanvas):
                     range_1 = 1e3*(np.mean(residuals) + 4 * np.std(residuals))
                     ranges_1.append(range_1)
 
-                    ax1.plot(data['laser_position_IN'], 1e3 * data['residuals_IN_origin'], '.', color=acolor)
-                    m = dt.make_histogram(1e3 * data['residuals_IN_origin'], [range_0, range_1], 'um', axe=ax2, color=acolor)
+                    ax1.plot(data['laser_position_IN'], 1e3 * data['residuals_IN_origin'], '.', color=colorVal)
+                    m = dt.make_histogram(1e3 * data['residuals_IN_origin'], [range_0, range_1], 'um', axe=ax2, color=colorVal)
 
                 elif self.in_or_out is 'OUT':
 
@@ -119,18 +116,18 @@ class plot(mplCanvas):
                     range_1 = 1e3 * (np.mean(residuals) + 4 * np.std(residuals))
                     ranges_1.append(range_1)
 
-                    ax1.plot(data['laser_position_OUT'], 1e3 * data['residuals_OUT_origin'], '.', color=acolor)
+                    ax1.plot(data['laser_position_OUT'], 1e3 * data['residuals_OUT_origin'], '.', color=colorVal)
                     m = dt.make_histogram(1e3 * data['residuals_OUT_origin'], [range_0, range_1], 'um', axe=ax2,
-                                          color=acolor)
+                                          color=colorVal)
                 mu.append(m)
+
+            cnt = cnt + 1
 
         if len(ranges_0) > 0:
             ax1.set_ylim([np.min(np.asarray(ranges_0)), np.max(np.asarray(ranges_1))])
             ax2.set_xlim([np.min(np.asarray(ranges_0)), np.max(np.asarray(ranges_1))])
         else:
             ax1.set_ylim([-100, 100])
-
-        ax1.set_xlim([-60, 60])
 
         if len(self.folders) > 1:
 
@@ -151,6 +148,9 @@ class plot(mplCanvas):
             ax2.set_title('Wire position error histogram', loc='left')
             ax2.set_ylabel('Occurence')
             ax2.set_xlabel('Error (\u03BCm)')
+
+            ax1.set_ylim([-150, 150])
+            ax2.set_xlim([-150, 150])
 
             prairie.style(ax1)
             prairie.style(ax2)

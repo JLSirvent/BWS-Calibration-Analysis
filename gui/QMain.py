@@ -55,7 +55,7 @@ class QMain(QWidget):
 
         self.header = QHBoxLayout()
 
-        self.Title = QLabel('BWS protoype analysis tool')
+        self.Title = QLabel('LIU-BWS Calibration Analysis SW')
         f = QtGui.QFont('Arial', 20, QtGui.QFont.Bold)
         f.setStyleStrategy(QtGui.QFont.PreferAntialias)
         self.Title.setFont(QtGui.QFont('Arial', 20, QtGui.QFont.Bold))
@@ -74,16 +74,16 @@ class QMain(QWidget):
 
         self.global_tab = QTabWidget()
         self.ProcessedAnalysisisTab = QProcessedAnalysisTab.QProcessedAnalysisTab(self)
-        self.TabFileProcessing = QTabFileProcessing.QTabFileProcessing(self)
         self.MultipleCalibrationAnalysis = QMultipleCalibrationAnalysis.QMultipleCalibrationAnalysis(self)
         self.SingleScanAnalysis = QTabSingleScanAnalysis.QTabSingleScanAnalysis(self)
+        #self.TabFileProcessing = QTabFileProcessing.QTabFileProcessing(self)
 
         self.LogDialog = QLogDialog.QLogDialog()
 
         self.global_tab.addTab(self.ProcessedAnalysisisTab, "Single calibration analysis")
         self.global_tab.addTab(self.MultipleCalibrationAnalysis, "Multiple calibration analysis")
         self.global_tab.addTab(self.SingleScanAnalysis, "Scan raw data analysis")
-        self.global_tab.addTab(self.TabFileProcessing, "Calibration processing")
+        #self.global_tab.addTab(self.TabFileProcessing, "Calibration processing")
         self.mainLayout.addLayout(self.header)
         self.mainLayout.addWidget(self.global_tab)
         self.mainLayout.addWidget(self.LogDialog)

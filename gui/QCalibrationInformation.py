@@ -28,7 +28,7 @@ from __future__ import unicode_literals
 
 from lib import utils
 from gui import QFolderSelectionWidget
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar, QCheckBox
 import configparser
 import os
 
@@ -58,11 +58,32 @@ class QCalibrationInformation(QWidget):
         self.setparam_button = QPushButton('Set param',self)
         self.testparam_button = QPushButton('Test param', self)
         self.processcalibration_button = QPushButton('PROCESS calibration',self)
+
+        self.import_options_box  = QGroupBox('Import Options')
+        self.chkCalibrations = QCheckBox('Calibration Curves')
+        self.chkCalibrations.setChecked(1)
+        self.chkPositions = QCheckBox('Positions')
+        self.chkSpeeds = QCheckBox('Speeds')
+        self.chkEccentricities = QCheckBox('Eccentricities')
+        self.chkFPC = QCheckBox('Fixed Point Calibration')
+        self.chkRDS = QCheckBox('Relative Distance Signature')
+
         self.import_button = QPushButton('IMPORT calibration',self)
 
         self.processed_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('PROCESSED folder:')
         self.tdms_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('TDMS folder:', button=False)
         self.parameters_file_selection = QFolderSelectionWidget.QFolderSelectionWidget('Parameters file:', button=False)
+
+        self.import_options_box_layout = QVBoxLayout(self)
+        self.import_options_box_layout.addStretch(1)
+        self.import_options_box_layout.addWidget(self.chkCalibrations)
+        self.import_options_box_layout.addWidget(self.chkPositions)
+        self.import_options_box_layout.addWidget(self.chkSpeeds)
+        self.import_options_box_layout.addWidget(self.chkEccentricities)
+        self.import_options_box_layout.addWidget(self.chkFPC)
+        self.import_options_box_layout.addWidget(self.chkRDS)
+        self.import_options_box_layout.addWidget(self.import_button)
+        self.import_options_box.setLayout(self.import_options_box_layout)
 
         self.import_box = QGroupBox('Calibration Selection')
 
@@ -78,16 +99,13 @@ class QCalibrationInformation(QWidget):
         self.import_box_layout.addLayout(self.import_box_layout2)
 
         self.import_box_layout.addWidget(self.processcalibration_button)
-        self.import_box_layout.addWidget(self.import_button)
+        self.import_box_layout.addWidget(self.import_options_box)
 
         self.import_box.setLayout(self.import_box_layout)
 
         main_layout.addWidget(self.import_box)
 
         #main_layout.addWidget(self.processed_data_selection)
-
-        self.setFixedWidth(250)
-        #self.setFixedHeight(700)
 
         self.labels_layout = QVBoxLayout()
         self.values_layout = QVBoxLayout()
@@ -141,7 +159,8 @@ class QCalibrationInformation(QWidget):
         main_layout.addWidget(self.label_file)
         # ---
 
-        self.setFixedHeight(430)
+        #self.setFixedHeight(430)
+        self.setFixedWidth(250)
 
         self.setLayout(main_layout)
 

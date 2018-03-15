@@ -46,15 +46,15 @@ class QFileDescriptionTable(QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.main_layout = QVBoxLayout(self.main_widget)
 
-        self.see_raw_button = QPushButton('OPS Processing from tdms')
-        self.dump_button = QPushButton('Dump this scan')
-        self.set_parameters_button = QPushButton('Set processing Parameters')
-        self.reprocess_button = QPushButton('Reprocess this scan')
+        #self.dump_button = QPushButton('Dump this scan')
+        #self.set_parameters_button = QPushButton('Set processing Parameters')
+        self.save_and_update = QPushButton('Save and update validity')
+        self.see_raw_button = QPushButton('Open Selected File')
 
+        #self.dump_button.setFixedWidth(278)
+        #self.set_parameters_button.setFixedWidth(278)
+        self.save_and_update.setFixedWidth(278)
         self.see_raw_button.setFixedWidth(278)
-        self.dump_button.setFixedWidth(278)
-        self.set_parameters_button.setFixedWidth(278)
-        self.reprocess_button.setFixedWidth(278)
 
         self.table = QTableWidget()
         self.table.verticalHeader().hide()
@@ -66,10 +66,10 @@ class QFileDescriptionTable(QWidget):
         self.table.setFixedWidth(278)
 
         self.main_layout.addWidget(self.table)
+        self.main_layout.addWidget(self.save_and_update)
         self.main_layout.addWidget(self.see_raw_button)
-        self.main_layout.addWidget(self.dump_button)
-        self.main_layout.addWidget(self.set_parameters_button)
-        self.main_layout.addWidget(self.reprocess_button)
+        #self.main_layout.addWidget(self.dump_button)
+        #self.main_layout.addWidget(self.set_parameters_button)
 
 
         self.setLayout(self.main_layout)

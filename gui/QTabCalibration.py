@@ -31,6 +31,7 @@ import configparser
 
 from PyQt5 import QtCore
 from scipy.optimize import curve_fit
+from scipy.signal import savgol_filter
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QStackedWidget, QWidget, QVBoxLayout
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT as NavigationToolbar
@@ -150,6 +151,12 @@ class plot(mplCanvas):
             self.focus = np.where(self.idxs == self.focus)[0]
 
             laser_position = -laser_position + tank_center
+
+            # DeleteCorrection
+            # CorrectIndex = np.where((laser_position <= 1.5) & (laser_position >= -36.5))
+            # laser_position[CorrectIndex] = laser_position[CorrectIndex] - 1
+            # ----------------
+
             self.y_IN_A = laser_position
             self.x_IN_A = occlusion_position
 
@@ -189,7 +196,11 @@ class plot(mplCanvas):
             prairie.style(ax2)
 
             ax3 = self.fig.add_subplot(2, 2, 3)
+            residuals_smooth = savgol_filter(np.asarray(residuals),9, 2)
             ax3.plot(laser_position, 1e3 * residuals, '.', color=self.color, markersize=1.5)
+            print(residuals_smooth.size)
+            print(laser_position.size)
+            ax3.plot(laser_position, 1e3 * residuals_smooth, color=self.color)
             ax3.set_ylim([-300, 300])
             ax3.set_title('Wire position error', loc='left')
             ax3.set_ylabel('Wire position error (\u03BCm)')
@@ -200,6 +211,10 @@ class plot(mplCanvas):
                 param[2]) + '*' + 'cos(\u03C0-x+' + "{:3.2f}".format(
                 param[0]) + ')'
             legend = 'Theoretical Wire position: ' + equation
+
+            print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))
+            print('Calculated Fork_Length: ' + "{:3.5f}".format(param[2]))
+            print('Calculated Fork_Phase: ' + "{:3.5f}".format(param[0]))
 
             self.ax1 = self.fig.add_subplot(2, 1, 1)
             self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color='black')
