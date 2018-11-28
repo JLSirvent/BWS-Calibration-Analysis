@@ -473,14 +473,14 @@ def theoretical_laser_position(x, a, b, c):
     """
     theoretical angular position of the wire in respect to the laser position
     """
-    return b - c * np.cos(np.pi - x + a);
+    return b - c * np.cos(np.pi - (x + a));
 
 
 def inverse_theoretical_laser_position(y, a, b, c):
     """
      theoretical angular position of the wire in respect to the laser position
      """
-    return np.pi + a - np.arccos((b - y) / c)
+    return np.pi - a - np.arccos((b - y) / c)
 
 
 def python_lines(folder):

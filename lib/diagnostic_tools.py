@@ -326,8 +326,7 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
 
     AngularIncrement = 2 * np.pi / SlitsperTurn
-
-    AngularIncrementC = 2 * np.pi / (SlitsperTurn+11)
+    AngularIncrementC = 2 * np.pi / (29386)
 
     # IN
     data_IN = sio.loadmat(folder_name + '/' + filenameIN, struct_as_record=False, squeeze_me=True)
@@ -359,7 +358,7 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     laser_position_OUT = laser_position_OUT[idxs_OUT]
     scan_number_OUT = scan_number_OUT[idxs_OUT]
     laser_position_OUT = -laser_position_OUT + tank_center
-    occlusion_position_OUT = (np.pi / 2) + 4.5 * AngularIncrement - occlusion_position_OUT
+    occlusion_position_OUT = (np.pi / 2) + 4.5 * AngularIncrementC - occlusion_position_OUT
 
     unique_laser_position = np.unique(laser_position_IN)
     occlusion_position_mean_IN = []

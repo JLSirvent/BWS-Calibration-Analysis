@@ -138,9 +138,13 @@ class plot(mplCanvas):
                 rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
                 distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
                 rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
-                ax1.plot(1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset], rel_distances_A, '.',
+
+                xtimeA = 1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset]
+                xtimeB = 1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset]
+
+                ax1.plot(xtimeA,rel_distances_A, '.',
                          color=color_A)
-                ax1.plot(1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset], rel_distances_B, '.',
+                ax1.plot(xtimeB,rel_distances_B, '.',
                          color=color_B)
 
             ax1.set_xlabel('Time (ms)')
@@ -163,9 +167,13 @@ class plot(mplCanvas):
                 rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
                 distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
                 rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
-                ax2.plot(1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset], rel_distances_A, '.',
+
+                xtimeA = 1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset]
+                xtimeB = 1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset]
+
+                ax2.plot(xtimeA, rel_distances_A, '.',
                          color=color_A)
-                ax2.plot(1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset], rel_distances_B, '.',
+                ax2.plot(xtimeB, rel_distances_B, '.',
                          color=color_B)
 
             ax2.set_xlabel('Time (ms)')

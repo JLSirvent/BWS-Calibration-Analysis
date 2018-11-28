@@ -35,7 +35,7 @@ from lib import diagnostic_tools as dt
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_19__14_51 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2017_12_19__15_57 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2018_01_16__16_23 PROCESSED'
-PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2018_01_17__15_03 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR000002\ProcessedData\SN64__2018_01_17__15_03 PROCESSED'
 
 
 # BWS PROTOTYPE SN65 (PSB-PXBWSRA005-CR000001)
@@ -43,10 +43,17 @@ PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005_CR0
 
 # BWS PROTOTYPE PS SN128 (PS_PXBWSRB011_CR000001)
 # -----------------------------------------------
+
+# For PS Minimum systematics
+# Slits per Turn --> 29386
+# Out correction --> 4.5 Positions
+
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__09_53 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__10_31 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__16_44 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_01 PROCESSED'
+PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_14 PROCESSED'
+
 
 ParametersCurve = []
 

@@ -172,6 +172,7 @@ class plot(mplCanvas):
             occlusion_position_mean = np.asarray(occlusion_position_mean)
             popt, pcov = curve_fit(utils.theoretical_laser_position, occlusion_position_mean[off1[0]:off1[1]],
                                    unique_laser_position[off1[0]:off1[1]], bounds=([-5, 80, 100], [5, 500, 500]))
+
             theorical_laser_position_mean = utils.theoretical_laser_position(occlusion_position_mean, popt[0], popt[1],
                                                                              popt[2])
             theoretical_laser_position = utils.theoretical_laser_position(occlusion_position, popt[0], popt[1], popt[2])
@@ -208,8 +209,8 @@ class plot(mplCanvas):
             prairie.style(ax3)
 
             equation = "{:3.2f}".format(param[1]) + '-' + "{:3.2f}".format(
-                param[2]) + '*' + 'cos(\u03C0-x+' + "{:3.2f}".format(
-                param[0]) + ')'
+                param[2]) + '*' + 'cos(\u03C0-(x + ' + "{:3.2f}".format(
+                param[0]) + '))'
             legend = 'Theoretical Wire position: ' + equation
 
             print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))
