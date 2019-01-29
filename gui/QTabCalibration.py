@@ -129,139 +129,118 @@ class plot(mplCanvas):
     def compute_initial_figure(self):
         try:
             self.fig.clear()
+            for i in range(0,2):
+                print(i)
+                if i == 0:
+                    laser_position = self.y_IN_A
+                    occlusion_position = self.x_IN_A
+                    self.in_or_out = 'IN'
+                else:
+                    laser_position = self.y_OUT_A
+                    occlusion_position = self.x_OUT_A
+                    self.in_or_out = 'OUT'
 
-            laser_position = self.y_IN_A
-            occlusion_position = self.x_IN_A
+                if self.in_or_out is 'IN':
+                    self.color = 'blue'#'#018BCF'
+                elif self.in_or_out is 'OUT':
+                    self.color = 'red'#'#CF2A1B'
 
-            if self.in_or_out is 'IN':
-                self.color = '#018BCF'
-            elif self.in_or_out is 'OUT':
-                self.color = '#CF2A1B'
+                parameter_file = utils.resource_path('data/parameters.cfg')
+                config = configparser.RawConfigParser()
+                config.read(parameter_file)
+                positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
+                positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
+                tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
-            parameter_file = utils.resource_path('data/parameters.cfg')
-            config = configparser.RawConfigParser()
-            config.read(parameter_file)
-            positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
-            positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-            tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
+                self.idxs = np.argsort(laser_position)
+                occlusion_position = occlusion_position[self.idxs]
+                laser_position = laser_position[self.idxs]
+                self.focus = np.where(self.idxs == self.focus)[0]
 
-            self.idxs = np.argsort(laser_position)
-            occlusion_position = occlusion_position[self.idxs]
-            laser_position = laser_position[self.idxs]
-            self.focus = np.where(self.idxs == self.focus)[0]
+                laser_position = -laser_position + tank_center
 
-            laser_position = -laser_position + tank_center
+                # DeleteCorrection
+                # CorrectIndex = np.where((laser_position <= 1.5) & (laser_position >= -36.5))
+                # laser_position[CorrectIndex] = laser_position[CorrectIndex] - 1
+                # ----------------
+                if i == 0:
+                    self.y_IN_A = laser_position
+                    self.x_IN_A = occlusion_position
+                else:
+                    self.y_OUT_A = laser_position
+                    self.x_OUT_A = occlusion_position
 
-            # DeleteCorrection
-            # CorrectIndex = np.where((laser_position <= 1.5) & (laser_position >= -36.5))
-            # laser_position[CorrectIndex] = laser_position[CorrectIndex] - 1
-            # ----------------
+                unique_laser_position = np.unique(laser_position)
+                occlusion_position_mean = []
 
-            self.y_IN_A = laser_position
-            self.x_IN_A = occlusion_position
+                for laser_pos in unique_laser_position:
+                    occlusion_position_mean.append(np.mean(occlusion_position[np.where(laser_position == laser_pos)[0]]))
 
-            unique_laser_position = np.unique(laser_position)
-            occlusion_position_mean = []
+                off1 = [int(positions_for_fit[0] / 100 * unique_laser_position.size),
+                        int(positions_for_fit[1] / 100 * unique_laser_position.size)]
 
-            for laser_pos in unique_laser_position:
-                occlusion_position_mean.append(np.mean(occlusion_position[np.where(laser_position == laser_pos)[0]]))
+                occlusion_position_mean = np.asarray(occlusion_position_mean)
+                popt, pcov = curve_fit(utils.theoretical_laser_position, occlusion_position_mean[off1[0]:off1[1]],
+                                       unique_laser_position[off1[0]:off1[1]], bounds=([-5, 80, 100], [5, 500, 500]))
 
-            off1 = [int(positions_for_fit[0] / 100 * unique_laser_position.size),
-                    int(positions_for_fit[1] / 100 * unique_laser_position.size)]
+                theorical_laser_position_mean = utils.theoretical_laser_position(occlusion_position_mean, popt[0], popt[1],
+                                                                                 popt[2])
+                theoretical_laser_position = utils.theoretical_laser_position(occlusion_position, popt[0], popt[1], popt[2])
+                param = popt
 
-            occlusion_position_mean = np.asarray(occlusion_position_mean)
-            popt, pcov = curve_fit(utils.theoretical_laser_position, occlusion_position_mean[off1[0]:off1[1]],
-                                   unique_laser_position[off1[0]:off1[1]], bounds=([-5, 80, 100], [5, 500, 500]))
+                off2 = [int(positions_for_analysis[0] / 100 * laser_position.size),
+                        int(positions_for_analysis[1] / 100 * laser_position.size)]
 
-            theorical_laser_position_mean = utils.theoretical_laser_position(occlusion_position_mean, popt[0], popt[1],
-                                                                             popt[2])
-            theoretical_laser_position = utils.theoretical_laser_position(occlusion_position, popt[0], popt[1], popt[2])
-            param = popt
+                laser_position = laser_position[off2[0]:off2[1]]
+                theoretical_laser_position = theoretical_laser_position[off2[0]:off2[1]]
+                occlusion_position = occlusion_position[off2[0]:off2[1]]
+                residuals = laser_position - theoretical_laser_position
 
-            off2 = [int(positions_for_analysis[0] / 100 * laser_position.size),
-                    int(positions_for_analysis[1] / 100 * laser_position.size)]
+                plt.figure(figsize=(6.5, 7.5))
+                prairie.use()
+                ax2 = self.fig.add_subplot(2, 2, 4)
+                residuals = residuals[off2[0]:off2[1]]
+                dt.make_histogram(1e3 * residuals, [-300, 300], '\u03BCm', axe=ax2, color=self.color)
+                ax2.set_title('Wire position error histogram', loc='left')
+                ax2.set_xlabel('Wire position error (\u03BCm)')
+                ax2.set_ylabel('Occurrence')
+                prairie.style(ax2)
 
-            laser_position = laser_position[off2[0]:off2[1]]
-            theoretical_laser_position = theoretical_laser_position[off2[0]:off2[1]]
-            occlusion_position = occlusion_position[off2[0]:off2[1]]
-            residuals = laser_position - theoretical_laser_position
+                ax3 = self.fig.add_subplot(2, 2, 3)
+                residuals_smooth = savgol_filter(np.asarray(residuals),9, 2)
+                ax3.plot(laser_position, 1e3 * residuals, '.', color=self.color, markersize=6, alpha = 0.6)
+                print(residuals_smooth.size)
+                print(laser_position.size)
+                ax3.plot(laser_position, 1e3 * residuals_smooth, color=self.color)
+                ax3.set_ylim([-300, 300])
+                ax3.set_title('Wire position error', loc='left')
+                ax3.set_ylabel('Wire position error (\u03BCm)')
+                ax3.set_xlabel('Laser position (mm)')
+                prairie.style(ax3)
 
-            plt.figure(figsize=(6.5, 7.5))
-            prairie.use()
-            ax2 = self.fig.add_subplot(2, 2, 4)
-            residuals = residuals[off2[0]:off2[1]]
-            dt.make_histogram(1e3 * residuals, [-300, 300], '\u03BCm', axe=ax2, color=self.color)
-            ax2.set_title('Wire position error histogram', loc='left')
-            ax2.set_xlabel('Wire position error (\u03BCm)')
-            ax2.set_ylabel('Occurrence')
-            prairie.style(ax2)
+                equation = "{:3.2f}".format(param[1]) + '-' + "{:3.2f}".format(
+                    param[2]) + '*' + 'cos(\u03C0-(x + ' + "{:3.2f}".format(
+                    param[0]) + '))'
+                LegendText = 'Fit ' + self.in_or_out + ': ' + equation
 
-            ax3 = self.fig.add_subplot(2, 2, 3)
-            residuals_smooth = savgol_filter(np.asarray(residuals),9, 2)
-            ax3.plot(laser_position, 1e3 * residuals, '.', color=self.color, markersize=1.5)
-            print(residuals_smooth.size)
-            print(laser_position.size)
-            ax3.plot(laser_position, 1e3 * residuals_smooth, color=self.color)
-            ax3.set_ylim([-300, 300])
-            ax3.set_title('Wire position error', loc='left')
-            ax3.set_ylabel('Wire position error (\u03BCm)')
-            ax3.set_xlabel('Laser position (mm)')
-            prairie.style(ax3)
+                print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))
+                print('Calculated Fork_Length: ' + "{:3.5f}".format(param[2]))
+                print('Calculated Fork_Phase: ' + "{:3.5f}".format(param[0]))
 
-            equation = "{:3.2f}".format(param[1]) + '-' + "{:3.2f}".format(
-                param[2]) + '*' + 'cos(\u03C0-(x + ' + "{:3.2f}".format(
-                param[0]) + '))'
-            legend = 'Theoretical Wire position: ' + equation
+                self.ax1 = self.fig.add_subplot(2, 1, 1)
+                self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color=self.color, label = LegendText)
+                self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=6, alpha = 0.6)
+                self.foc_marker, = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)
+                self.ax1.set_title('Theoretical wire positions vs. measured positions', loc='left')
 
-            print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))
-            print('Calculated Fork_Length: ' + "{:3.5f}".format(param[2]))
-            print('Calculated Fork_Phase: ' + "{:3.5f}".format(param[0]))
-
-            self.ax1 = self.fig.add_subplot(2, 1, 1)
-            self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color='black')
-            self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=4)
-            self.foc_marker, = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color=self.color, fillstyle='none', markersize=10)
-            self.ax1.legend([legend, 'Measured positions'])
-            # ax1.set_title(folder_name + '  ' + in_or_out + '\n\n\n Theoretical wire positions vs. measured positions',
-            #               loc='left')
-
-            self.ax1.set_title('Theoretical wire positions vs. measured positions', loc='left')
-
-            self.ax1.set_xlabel('Angular position at laser crossing (rad)')
-            self.ax1.set_ylabel('Laser position (mm)')
-            prairie.style(self.ax1)
-
-            # ax4 = plt.subplot2grid((3, 2), (2, 0), colspan=2)
-            # ax4.plot(1e3 * residuals, '.', color=color, markersize=1.5)
-            # ax4.plot(1e3 * residuals, color=color, linewidth=0.5)
-            # ax4.set_title('Wire position error over scans', loc='left')
-            # ax4.set_ylabel('Wire position error (\u03BCm)')
-            # ax4.set_xlabel('Scan #')
-            # prairie.apply(ax4)
-            #
-            # plt.tight_layout()
-
-
-            # ax1 = self.fig.add_subplot(2, 1, 1)
-            # ax1.set_title('Position error and eccentricity compensation - IN', loc='left')
-            # ax1.set_xlabel('Angular position (rad)')
-            # ax1.set_ylabel('Position error (rad)')
-            # ax1.plot(self.x1, self.y1)
-            # ax1.set_xlim([self.x1[0], self.x1[::-1][0]])
-            # prairie.apply(ax1)
-            # # print(self.x1)
-            #
-            # ax2 = self.fig.add_subplot(2, 1, 2)
-            # ax2.set_title('Position error and eccentricity compensation - OUT', loc='left')
-            # ax2.set_xlabel('Angular position (rad)')
-            # ax2.set_ylabel('Position error (rad)')
-            # ax2.plot(self.x2, self.y2)
-            # ax2.set_xlim([self.x2[0], self.x2[::-1][0]])
-            # prairie.apply(ax2)
-
-            self.fig.tight_layout()
+                self.ax1.set_xlabel('Angular position at laser crossing (rad)')
+                self.ax1.set_ylabel('Laser position (mm)')
+                prairie.style(self.ax1)
+                self.fig.tight_layout()
+            self.ax1.legend()
         except:
             print('Error Calibration!')
+
 
     def refocus(self, index):
 

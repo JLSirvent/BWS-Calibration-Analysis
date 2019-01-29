@@ -45,7 +45,7 @@ class QTabWidgetPlotting(QTabWidget):
         super(QTabWidgetPlotting, self).__init__(parent)
 
         self.tab_calibration_IN = QTabCalibration('IN')
-        self.tab_calibration_OUT = QTabCalibration('OUT')
+        #self.tab_calibration_OUT = QTabCalibration('OUT')
         self.tab_speeds = QTabSpeeds_Positions('Speed ','Time [ms]','Angular speed [rad/s]',8)
         self.tab_positions = QTabSpeeds_Positions('Position ', 'Time [ms]', 'Angular Position [rad]', 1)
         self.tab_eccentricities = QTabEccentricities()
@@ -69,8 +69,8 @@ class QTabWidgetPlotting(QTabWidget):
 
         self.tab_RDS = QTabRDS()
 
-        self.addTab(self.tab_calibration_IN, "Calibration - IN")
-        self.addTab(self.tab_calibration_OUT, "Calibration - OUT")
+        self.addTab(self.tab_calibration_IN, "Calibration IN - OUT")
+        #self.addTab(self.tab_calibration_OUT, "Calibration - OUT")
         self.addTab(self.tab_speeds,"Speeds")
         self.addTab(self.tab_positions,"Positions")
         self.addTab(self.tab_eccentricities,"Eccentricities")

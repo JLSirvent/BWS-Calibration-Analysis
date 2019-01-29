@@ -255,10 +255,10 @@ class QProcessedAnalysisTab(QWidget):
             # --
 
             # Process Positions
-            Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ")
-            Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ")
-            Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ")
-            Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ")
+            Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ", INOUT= 'OUT')
+            Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ", INOUT= 'OUT')
 
             Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in)
             Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out)
@@ -311,8 +311,8 @@ class QProcessedAnalysisTab(QWidget):
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
                                              x1=Data_SA_in[1],
                                              y1=1e6*_eccentricity_in,
-                                             x2=np.pi/2 - Data_SA_out[1],
-                                             y2=-1e6*_eccentricity_out,
+                                             x2=Data_SA_out[1],
+                                             y2=1e6*_eccentricity_out,
                                              x1_2= [0, 0],
                                              y1_2= [0, 0],
                                              x2_2= [0, 0],
@@ -397,9 +397,9 @@ class QProcessedAnalysisTab(QWidget):
 
         # OUT POSITIONS CORRECTION:
         # -------------------------
-        self.calibration.occlusion_OUT = np.pi / 2 - self.calibration.occlusion_OUT
-        self.calibration.angular_position_SA_OUT = np.pi / 2 - self.calibration.angular_position_SA_OUT
-        self.calibration.angular_position_SB_OUT = np.pi / 2 - self.calibration.angular_position_SB_OUT
+        #self.calibration.occlusion_OUT = np.pi / 2 - self.calibration.occlusion_OUT
+        #self.calibration.angular_position_SA_OUT = np.pi / 2 - self.calibration.angular_position_SA_OUT
+        #self.calibration.angular_position_SB_OUT = np.pi / 2 - self.calibration.angular_position_SB_OUT
 
         sio.savemat(self.full_directory_processed + '/PROCESSED_OUT.mat',
 
@@ -435,9 +435,9 @@ class QProcessedAnalysisTab(QWidget):
 
             # OUT POSITIONS CORRECTION:
             # -------------------------
-            self.calibration.occlusion_OUT = np.pi/2 - self.calibration.occlusion_OUT
-            self.calibration.angular_position_SA_OUT = np.pi/2 - self.calibration.angular_position_SA_OUT
-            self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
+            #self.calibration.occlusion_OUT = np.pi/2 - self.calibration.occlusion_OUT
+            #self.calibration.angular_position_SA_OUT = np.pi/2 - self.calibration.angular_position_SA_OUT
+            #self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
 
             Idx = np.where(self.calibration.data_valid == 1)
             print('fine index found')
@@ -462,13 +462,15 @@ class QProcessedAnalysisTab(QWidget):
                 # --------------
                 self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
                                            self.calibration.occlusion_IN[Idx],
-                                           self.calibration.laser_position_IN[Idx], 0, 0)
+                                           self.calibration.laser_position_IN[Idx],
+                                           self.calibration.occlusion_OUT[Idx],
+                                           self.calibration.laser_position_OUT[Idx])
 
                 # CALIBRATION OUT
                 # ---------------
-                self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_OUT,
-                                           self.calibration.occlusion_OUT[Idx],
-                                           self.calibration.laser_position_OUT[Idx], 0, 0)
+                #self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_OUT,
+                #                           self.calibration.occlusion_OUT[Idx],
+                #                           self.calibration.laser_position_OUT[Idx], 0, 0)
 
             if self.CalibrationInformation.chkPositions.isChecked():
                 # POSITIONS
@@ -486,10 +488,10 @@ class QProcessedAnalysisTab(QWidget):
                 # ------
                 self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_speeds,
                                                  x1=self.calibration.time_IN_SA[Idx],
-                                                 y1=self.calibration.speed_IN_SA[Idx],
+                                                 y1=1e3*self.calibration.speed_IN_SA[Idx],
                                                  b1=Boundin,
                                                  x2=self.calibration.time_OUT_SA[Idx],
-                                                 y2=self.calibration.speed_OUT_SA[Idx],
+                                                 y2=1e3*self.calibration.speed_OUT_SA[Idx],
                                                  b2=Boundout)
 
             if self.CalibrationInformation.chkEccentricities.isChecked():
@@ -543,7 +545,7 @@ class QProcessedAnalysisTab(QWidget):
     def actualise_not_folder_dependant_plot(self):
         SelectedIndex = np.count_nonzero(self.calibration.data_valid[0:self.actual_index])
         self.TabWidgetPlotting.tab_calibration_IN.set_focus(SelectedIndex)
-        self.TabWidgetPlotting.tab_calibration_OUT.set_focus(SelectedIndex)
+        #self.TabWidgetPlotting.tab_calibration_OUT.set_focus(SelectedIndex)
 
 
     def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2):

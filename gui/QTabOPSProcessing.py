@@ -212,7 +212,7 @@ class plot(mplCanvas):
             # -----------
             ax1 = self.fig.add_subplot(321)
             try:
-                P = ops.process_position(self.x_IN_A,  parameter_file, self.t1[0], return_processing=True)
+                P = ops.process_position(self.x_IN_A,  parameter_file, self.t1[0], return_processing=True, INOUT='IN')
                 ax1.axhspan(0, P[8], color='black', alpha=0.05)
                 ax1.plot( P[0], P[1], linewidth=0.5)
                 ax1.plot( P[2], P[3], '.', markersize=2)
@@ -236,7 +236,7 @@ class plot(mplCanvas):
             # -----------
             ax2 = self.fig.add_subplot(323, sharex=ax1)
             try:
-                P = ops.process_position(self.y_IN_A, parameter_file, self.t1[0], return_processing=True)
+                P = ops.process_position(self.y_IN_A, parameter_file, self.t1[0], return_processing=True, INOUT='IN')
                 ax2.axhspan(0, P[8], color='black', alpha=0.05)
                 ax2.plot( P[0], P[1], linewidth=0.5)
                 ax2.plot( P[2], P[3], '.', markersize=2)
@@ -250,6 +250,7 @@ class plot(mplCanvas):
             except:
                 ax2.plot(1e3*self.t1, self.y_IN_A, linewidth=0.5)
                 print('Error processing Sensor B_IN')
+
             ax2.set_title('OPS processing SB - IN', loc='left')
             ax2.set_xlabel('Time (ms)')
             ax2.set_ylabel('Normalized amplitude')
@@ -259,7 +260,7 @@ class plot(mplCanvas):
             # ------------
             ax3 = self.fig.add_subplot(322)
             try:
-                P = ops.process_position(self.x_OUT_A, parameter_file, self.t2[0], return_processing=True)
+                P = ops.process_position(self.x_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
                 ax3.axhspan(0, P[8], color='black', alpha=0.05)
                 ax3.plot( P[0], P[1], linewidth=0.5)
                 ax3.plot( P[2], P[3], '.', markersize=2)
@@ -282,7 +283,7 @@ class plot(mplCanvas):
             # ------------
             ax4 = self.fig.add_subplot(324, sharex = ax3)
             try:
-                P = ops.process_position(self.y_OUT_A, parameter_file, self.t2[0], return_processing=True)
+                P = ops.process_position(self.y_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
                 ax4.axhspan(0, P[8], color='black', alpha=0.05)
                 ax4.plot( P[0], P[1], linewidth=0.5)
                 ax4.plot( P[2], P[3], '.', markersize=2)

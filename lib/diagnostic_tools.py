@@ -87,7 +87,7 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
 
     if axe is None:
         data_range = np.asarray(data_range)
-        plt.hist(data, bins=binshist, normed=1, alpha=0.75)
+        plt.hist(data, bins=binshist, normed=0, alpha=0.3)
         plt.xlim([data_range[0], data_range[1]])
         (mu, sigma) = norm.fit(data)
         bins = np.arange(data_range[0], data_range[1], (data_range[1]-data_range[0])/500)
@@ -99,9 +99,9 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
 
         data_range = np.asarray(data_range)
         if color is not None:
-            axe.hist(data, bins=binshist, normed=1, alpha=0.75, color=color)
+            axe.hist(data, bins=binshist, normed=1, alpha=0.3, color=color)
         else:
-            axe.hist(data, bins=binshist, normed=1, alpha=0.75)
+            axe.hist(data, bins=binshist, normed=1, alpha=0.3)
 
         axe.set_xlim([data_range[0], data_range[1]])
         (mu, sigma) = norm.fit(data)
@@ -122,9 +122,9 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
                 legends.append(text._text)
 
         if projected is None:
-            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2))+ '   ' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ')')
+            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2))+ '   \n' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ')')
         elif projected is True:
-            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2)) + '   ' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ') \n' +
+            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2)) + '   \n' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ') \n' +
                            '\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2) * fork_length) + '   ' + '\u03BC ' + "{:3.3f}".format(mu * fork_length) + '  (\u03BCm)')
 
 

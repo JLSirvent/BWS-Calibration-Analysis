@@ -175,10 +175,10 @@ class plot(mplCanvas):
                     spe = np.convolve(spe, np.ones((self.N,)) / self.N, mode='valid')
                     tim = tim[off:spe.size - off]
                     spe = spe[off:spe.size - off]
-                    ax_all.plot(1e3*tim, spe, linewidth=0.8, color=colorVal)
+                    ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
                     cnt = cnt + 1
 
-                ax_all.axvspan(1e3*boundy[0], 1e3*boundy[1], color='red', alpha=0.1)
+                ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
                 ax_all.set_title(self.title + title + ' - Sensor A', loc='left')
                 ax_all.set_ylabel(self.ylabel)
                 ax_all.set_xlabel(self.xlabel)
