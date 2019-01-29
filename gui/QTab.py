@@ -138,7 +138,7 @@ class plot(mplCanvas):
 
         self.fig.clear()
 
-        ax1 = self.fig.add_subplot(2, 1, 1)
+        ax1 = self.fig.add_subplot(1, 2, 1)
         ax1.set_title(self.title, loc='left')
         ax1.set_xlabel(self.xlabel)
         ax1.set_ylabel(self.ylabel)
@@ -152,7 +152,7 @@ class plot(mplCanvas):
         prairie.style(ax1)
         # print(self.x1)
 
-        ax2 = self.fig.add_subplot(2, 1, 2)
+        ax2 = self.fig.add_subplot(1, 2, 2)
         ax2.set_title(self.title, loc='left')
         ax2.set_xlabel(self.xlabel)
         ax2.set_ylabel(self.ylabel)

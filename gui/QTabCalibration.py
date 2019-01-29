@@ -231,7 +231,7 @@ class plot(mplCanvas):
                 self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color=self.color, label = LegendText)
                 self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=6, alpha = 0.6)
                 self.foc_marker, = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)
-                self.ax1.set_title('Theoretical wire positions vs. measured positions', loc='left')
+                self.ax1.set_title('BWS Angular to Projected Motion', loc='left')
 
                 self.ax1.set_xlabel('Angular position at laser crossing (rad)')
                 self.ax1.set_ylabel('Laser position (mm)')

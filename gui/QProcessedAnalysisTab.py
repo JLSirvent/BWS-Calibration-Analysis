@@ -301,11 +301,11 @@ class QProcessedAnalysisTab(QWidget):
                                        x1=cut(2, Data_SA_in[0][0:len(_speed_SA_in)]),
                                        y1=cut(2, _speed_SA_in),
                                        x2=cut(2, Data_SA_out[0][0:len(_speed_SA_out)]),
-                                       y2=cut(2, _speed_SA_out),
+                                       y2=cut(2, -_speed_SA_out),
                                        x1_2=cut(2, Data_SB_in[0][0:len(_speed_SB_in)]),
                                        y1_2=cut(2, _speed_SB_in),
                                        x2_2=cut(2, Data_SB_out[0][0:len(_speed_SB_out)]),
-                                       y2_2=cut(2, _speed_SB_out))
+                                       y2_2=cut(2, -_speed_SB_out))
 
 
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
@@ -466,12 +466,6 @@ class QProcessedAnalysisTab(QWidget):
                                            self.calibration.occlusion_OUT[Idx],
                                            self.calibration.laser_position_OUT[Idx])
 
-                # CALIBRATION OUT
-                # ---------------
-                #self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_OUT,
-                #                           self.calibration.occlusion_OUT[Idx],
-                #                           self.calibration.laser_position_OUT[Idx], 0, 0)
-
             if self.CalibrationInformation.chkPositions.isChecked():
                 # POSITIONS
                 # ---------
@@ -491,7 +485,7 @@ class QProcessedAnalysisTab(QWidget):
                                                  y1=1e3*self.calibration.speed_IN_SA[Idx],
                                                  b1=Boundin,
                                                  x2=self.calibration.time_OUT_SA[Idx],
-                                                 y2=1e3*self.calibration.speed_OUT_SA[Idx],
+                                                 y2=-1e3*self.calibration.speed_OUT_SA[Idx],
                                                  b2=Boundout)
 
             if self.CalibrationInformation.chkEccentricities.isChecked():
@@ -507,6 +501,7 @@ class QProcessedAnalysisTab(QWidget):
                                                  b2=Boundin)
 
             if self.CalibrationInformation.chkFPC.isChecked():
+
                 # FIXED POINT CALIBRATION (FPC)
                 # ----------------------------
                 self.actualise_single_QTab(self.TabWidgetPlotting.tab_fpc,
