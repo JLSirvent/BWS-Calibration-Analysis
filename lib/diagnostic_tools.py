@@ -325,8 +325,8 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
     SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
 
-    AngularIncrement = 2 * np.pi / SlitsperTurn
-    AngularIncrementC = 2 * np.pi / (29386)
+    #AngularIncrement = 2 * np.pi / SlitsperTurn
+    #AngularIncrementC = 2 * np.pi / (29386)
 
     # IN
     data_IN = sio.loadmat(folder_name + '/' + filenameIN, struct_as_record=False, squeeze_me=True)
@@ -338,8 +338,8 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
 
     occlusion_position_IN = occlusion_position_IN[idxs_IN]
 
-    occlusion_position_IN = occlusion_position_IN/AngularIncrement
-    occlusion_position_IN = occlusion_position_IN * AngularIncrementC
+    #occlusion_position_IN = occlusion_position_IN/AngularIncrement
+    #occlusion_position_IN = occlusion_position_IN * AngularIncrementC
 
     laser_position_IN = laser_position_IN[idxs_IN]
     laser_position_IN = -laser_position_IN + tank_center
@@ -352,13 +352,13 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     idxs_OUT = np.argsort(scan_number_OUT)
     occlusion_position_OUT = occlusion_position_OUT[idxs_OUT]
 
-    occlusion_position_OUT = occlusion_position_OUT/AngularIncrement
-    occlusion_position_OUT = occlusion_position_OUT * AngularIncrementC
+    #occlusion_position_OUT = occlusion_position_OUT/AngularIncrement
+    #occlusion_position_OUT = occlusion_position_OUT * AngularIncrementC
 
     laser_position_OUT = laser_position_OUT[idxs_OUT]
     scan_number_OUT = scan_number_OUT[idxs_OUT]
     laser_position_OUT = -laser_position_OUT + tank_center
-    occlusion_position_OUT = (np.pi / 2) + 4.5 * AngularIncrementC - occlusion_position_OUT
+    #occlusion_position_OUT = (np.pi / 2) + 4.5 * AngularIncrementC - occlusion_position_OUT
 
     unique_laser_position = np.unique(laser_position_IN)
     occlusion_position_mean_IN = []
@@ -542,6 +542,72 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
     else:
         plt.show(block=True)
 
+def plot_peaks_distance(folder_name):
+    filenameIN = 'PROCESSED_OUT.mat'
+    colorIN = '#018BCF'
+
+    #filenameOUT = 'PROCESSED_OUT.mat'
+    #colorOUT = '#0EA318'
+
+    parameter_file = utils.resource_path('data/parameters.cfg')
+    config = configparser.RawConfigParser()
+    config.read(parameter_file)
+    positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
+    positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
+    tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
+    SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
+
+    # IN
+    data = sio.loadmat(folder_name + '/' + filenameIN, struct_as_record=False, squeeze_me=True)
+    occlusion_position = data['occlusion_position']
+    laser_position = data['laser_position']
+    scan_number =  data['scan_number']
+    idxs = np.argsort(scan_number)
+    scan_number = scan_number[idxs]
+    oc = data['oc']
+    valid = data['data_valid']
+    f = plt.figure(figsize = [14,8])
+    ax0 = f.add_subplot(1,2,1)
+    ax1 = f.add_subplot(1,2,2)
+
+    FitOrder = 15
+    laser_position = tank_center - laser_position
+
+    coef = [[],[]]
+    pos = laser_position
+
+    #Cleanup
+    Idx = np.where(valid==1)[0]
+    pos = laser_position[Idx]
+    oc = oc[Idx,:]
+    # **
+
+    for i in range(0, 2):
+        oc_c = oc[:,i]
+        if i == 0:
+            col = 'b'
+        else:
+            col = 'r'
+
+        popt, pcov = curve_fit(utils.theoretical_laser_position, oc_c,
+                                  pos, bounds=([-5, 80, 100], [5, 500, 500]))
+        datafit = utils.theoretical_laser_position(oc_c, popt[0], popt[1], popt[2])
+        coef[i] = popt
+        ax0.plot(oc_c, pos, '.' + col)
+        ax0.plot(oc_c, datafit, col)
+
+    Difference0 =  utils.theoretical_laser_position(oc[:,0], coef[0][0],coef[0][1],coef[0][2]) -  utils.theoretical_laser_position(oc[:, 1], coef[0][0], coef[0][1], coef[0][2])
+    Difference1 =  utils.theoretical_laser_position(oc[:,0], coef[1][0],coef[1][1],coef[1][2]) -  utils.theoretical_laser_position(oc[:, 1], coef[1][0], coef[1][1], coef[1][2])
+
+    ax1.plot(pos,Difference0,'.b',label = 'RMSE: {:.1f}um'.format(np.std(1e3*Difference0)))
+    ax1.plot(pos,Difference1,'.r',label = 'RMSE: {:.1f}um'.format(np.std(1e3*Difference1)))
+
+    ax0.grid()
+    ax0.legend()
+    ax1.grid()
+    ax1.legend()
+    ax1.set_ylim(2.4, 3.3)
+    plt.show()
 
 def plot_all_eccentricity(folder_name, in_or_out, howmuch='all', diagnostic=False, save=False, saving_name=None, separate=False):
     """
@@ -712,7 +778,6 @@ def plot_all_eccentricity(folder_name, in_or_out, howmuch='all', diagnostic=Fals
         return popt
 
     return ax1
-
 
 def plot_all_eccentricityV2(folder_name):
     """

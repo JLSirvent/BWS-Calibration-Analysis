@@ -621,6 +621,7 @@ class ProcessRawData(QtCore.QThread):
         eccentricity = []
         laser_position = []
         occlusion_position = []
+        oc = []
         data_valid = []
         original_time_SB = []
         scan_number = []
@@ -730,6 +731,8 @@ class ProcessRawData(QtCore.QThread):
                     # -----------------
 
                     _occlusion = (occ2 - occ1) / 2 + occ1
+                    _oc = [occ1, occ2]
+
                 else:
                     _occlusion = StartTime + 0.02
 
@@ -741,6 +744,7 @@ class ProcessRawData(QtCore.QThread):
                 speed_SA.append(_speed_SA)
                 speed_SB.append(_speed_SB)
                 occlusion_position.append(_occlusion)
+                oc.append(_oc)
                 data_valid.append(1)
 
             except:
@@ -753,6 +757,7 @@ class ProcessRawData(QtCore.QThread):
                 speed_SA.append([0,1])
                 speed_SB.append([0,1])
                 occlusion_position.append(0)
+                oc.append([0,0])
                 data_valid.append(0)
 
                 self.notifyState.emit("Error in file:" + mat_file)
@@ -777,6 +782,7 @@ class ProcessRawData(QtCore.QThread):
                      'eccentricity': eccentricity,
                      'laser_position': laser_position,
                      'occlusion_position': occlusion_position,
+                     'oc': oc,
                      'data_valid': data_valid,
                      'scan_number': scan_number,
                      'speed_SA': speed_SA,

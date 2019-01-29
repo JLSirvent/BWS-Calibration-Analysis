@@ -116,7 +116,7 @@ class plot(mplCanvas):
 
         self.in_or_out = 'IN'
 
-        self.foc_marker = 0
+        self.foc_marker = [0,0]
 
         self.color = 0
 
@@ -230,7 +230,7 @@ class plot(mplCanvas):
                 self.ax1 = self.fig.add_subplot(2, 1, 1)
                 self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color=self.color, label = LegendText)
                 self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=6, alpha = 0.6)
-                self.foc_marker, = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)
+                self.foc_marker[i], = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)
                 self.ax1.set_title('BWS Angular to Projected Motion', loc='left')
 
                 self.ax1.set_xlabel('Angular position at laser crossing (rad)')
@@ -244,9 +244,15 @@ class plot(mplCanvas):
 
     def refocus(self, index):
 
-        self.ax1.lines.pop(2)
+        #self.ax1.lines.pop(2)
+        #self.ax1.lines.pop(4)
+        self.foc_marker[0].remove()
+        self.foc_marker[1].remove()
+
         self.focus = np.where(self.idxs == index)[0]
-        self.ax1.plot(self.x_IN_A[self.focus], self.y_IN_A[self.focus], 'o',
-                      color=self.color, fillstyle='none', markersize=10)
+        self.foc_marker[0],=self.ax1.plot(self.x_IN_A[self.focus], self.y_IN_A[self.focus], 'o',
+                      color='blue', fillstyle='none', markersize=10)
+        self.foc_marker[1],=self.ax1.plot(self.x_OUT_A[self.focus], self.y_OUT_A[self.focus], 'o',
+                      color='red', fillstyle='none', markersize=10)
         self.draw()
 

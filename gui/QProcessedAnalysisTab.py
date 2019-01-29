@@ -372,6 +372,7 @@ class QProcessedAnalysisTab(QWidget):
             self.calibration.data_valid[item.row()] = 1
         else:
             self.calibration.data_valid[item.row()] = 0
+
         try:
             self.actualise_not_folder_dependant_plot()
         except:
@@ -386,6 +387,7 @@ class QProcessedAnalysisTab(QWidget):
                      'eccentricity': self.calibration.eccentricity_IN,
                      'laser_position': self.calibration.laser_position_IN,
                      'occlusion_position': self.calibration.occlusion_IN,
+                     'oc': self.calibration.oc_IN,
                      'data_valid': self.calibration.data_valid,
                      'scan_number': self.calibration.scan_number_IN,
                      'speed_SA': self.calibration.speed_IN_SA,
@@ -408,6 +410,7 @@ class QProcessedAnalysisTab(QWidget):
                      'eccentricity': self.calibration.eccentricity_OUT,
                      'laser_position': self.calibration.laser_position_OUT,
                      'occlusion_position': self.calibration.occlusion_OUT,
+                     'oc': self.calibration.oc_OUT,
                      'data_valid': self.calibration.data_valid,
                      'scan_number': self.calibration.scan_number_OUT,
                      'speed_SA': self.calibration.speed_OUT_SA,

@@ -48,6 +48,12 @@ class Calibration:
             self.speed_IN_SA = data['speed_SA']
             self.speed_IN_SB = data['speed_SB']
             self.occlusion_IN = data['occlusion_position']
+
+            try:
+                self.oc_IN = data['oc']
+            except:
+                self.oc_IN = [0,0]
+
             self.laser_position_IN = data['laser_position']
             self.scan_number_IN = data['scan_number']
 
@@ -65,6 +71,12 @@ class Calibration:
             self.speed_OUT_SA = data['speed_SA']
             self.speed_OUT_SB = data['speed_SB']
             self.occlusion_OUT = data['occlusion_position']
+
+            try:
+                self.oc_OUT = data['oc']
+            except:
+                self.oc_OUT = [0,0]
+
             self.laser_position_OUT = data['laser_position']
             self.scan_number_OUT = data['scan_number']
 

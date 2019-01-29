@@ -57,9 +57,13 @@ PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR00
 
 ParametersCurve = []
 
+
 # Complete calibration plot
 #dt.plot_calibration(folder_name=PROCESSED_folder, in_or_out='IN', complete_residuals_curve=False)
-dt.plot_calibration_INOUT(folder_name=PROCESSED_folder,complete_residuals_curve=False, remove_sytematics=False, N = 1, impose_parameters=False, parameters = ParametersCurve, inout_independent=False)
+#dt.plot_calibration_INOUT(folder_name=PROCESSED_folder,complete_residuals_curve=False, remove_sytematics=False, N = 1, impose_parameters=False, parameters = ParametersCurve, inout_independent=True)
+
+# Plot distance between peaks
+dt.plot_peaks_distance(folder_name=PROCESSED_folder)
 
 # All position profile plot (may be long)
 #dt.plot_all_positions(folder_name=PROCESSED_folder, in_or_out='IN')
