@@ -2,7 +2,11 @@
 
 **BWS-diagnostic** is a framework to asses, monitor and diagnose the new generation of rotational BWS developped at **CERN** inside the **BE-BI-PM** section.
 
-It has been written in **Python** and is available both as a **library** and used in an **expert GUI**.
+It has been written in **Python 3.7** and is available both as a **library** and used in an **expert GUI**.
+
+**Requisites:**
+...*Python 3.7 Distribution: [Anaconda](https://www.anaconda.com/download/)
+...*Python Development IDE: [PyCharm](https://www.jetbrains.com/pycharm/)
 
 For more info go to the [complete documentation (GitHub wiki)](https://github.com/LionelGarcia/BWS-diagnostic/wiki)
 

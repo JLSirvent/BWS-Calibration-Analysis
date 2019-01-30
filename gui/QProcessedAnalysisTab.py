@@ -500,7 +500,7 @@ class QProcessedAnalysisTab(QWidget):
                                                  y1=self.calibration.eccentricity_IN[Idx],
                                                  b1=Boundin,
                                                  x2=self.calibration.angular_position_SA_OUT[Idx],
-                                                 y2=self.calibration.eccentricity_OUT[Idx],
+                                                 y2=-self.calibration.eccentricity_OUT[Idx],
                                                  b2=Boundin)
 
             if self.CalibrationInformation.chkFPC.isChecked():

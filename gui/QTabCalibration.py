@@ -243,9 +243,6 @@ class plot(mplCanvas):
 
 
     def refocus(self, index):
-
-        #self.ax1.lines.pop(2)
-        #self.ax1.lines.pop(4)
         self.foc_marker[0].remove()
         self.foc_marker[1].remove()
 
