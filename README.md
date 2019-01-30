@@ -6,9 +6,9 @@ It has been written in **Python 3.7** and is available both as a **library** and
 
 **Requisites:**
 
-..*Python 3.7 Distribution: [Anaconda](https://www.anaconda.com/download/)
+1. Python 3.7 Distribution: [Anaconda](https://www.anaconda.com/download/)
 
-..*Python Development IDE: [PyCharm](https://www.jetbrains.com/pycharm/)
+2. Python Development IDE: [PyCharm](https://www.jetbrains.com/pycharm/)
 
 For more info go to the [complete documentation (GitHub wiki)](https://github.com/LionelGarcia/BWS-diagnostic/wiki)
 
