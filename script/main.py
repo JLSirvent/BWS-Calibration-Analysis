@@ -25,6 +25,8 @@
 
 
 import sys
+sys.path.append('./../')
+
 from PyQt5.QtWidgets import QApplication
 
 from gui import QMain
