@@ -235,11 +235,13 @@ class QProcessedAnalysisTab(QWidget):
 
         test = utils.tdms_list_from_folder_sorted(self.actual_TDMS_folder)
         filepath = test[self.actual_index]
-        #print(test[0])
-        #print(test[idx])
-        #
+
+        print(self.actual_index)
+        print(test[self.actual_index])
+
         data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(filepath)
-        #
+
+
         if type(data__s_a_in) is not int:
 
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_OPS_processing,
@@ -250,15 +252,13 @@ class QProcessedAnalysisTab(QWidget):
             parameter_file = utils.resource_path('data/parameters.cfg')
             config = configparser.RawConfigParser()
             config.read(parameter_file)
-            RangeIn = eval(config.get('OPS processing parameters', 'IN_range'))
-            RangeOut = eval(config.get('OPS processing parameters', 'OUT_range'))
             # --
 
             # Process Positions
-            Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ", INOUT= 'IN')
-            Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), RangeIn[0], showplot=0, filename=" ", INOUT= 'IN')
-            Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ", INOUT= 'OUT')
-            Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), RangeOut[0], showplot=0, filename=" ", INOUT= 'OUT')
+            Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), time__in[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), time__in[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
+            Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
 
             Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in)
             Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out)
@@ -299,14 +299,13 @@ class QProcessedAnalysisTab(QWidget):
 
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
                                        x1=cut(2, Data_SA_in[0][0:len(_speed_SA_in)]),
-                                       y1=cut(2, _speed_SA_in),
+                                       y1=cut(2, 1e3*_speed_SA_in),
                                        x2=cut(2, Data_SA_out[0][0:len(_speed_SA_out)]),
-                                       y2=cut(2, -_speed_SA_out),
+                                       y2=cut(2, 1e3*-_speed_SA_out),
                                        x1_2=cut(2, Data_SB_in[0][0:len(_speed_SB_in)]),
-                                       y1_2=cut(2, _speed_SB_in),
+                                       y1_2=cut(2, 1e3*_speed_SB_in),
                                        x2_2=cut(2, Data_SB_out[0][0:len(_speed_SB_out)]),
-                                       y2_2=cut(2, -_speed_SB_out))
-
+                                       y2_2=cut(2, -1e3*_speed_SB_out))
 
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
                                              x1=Data_SA_in[1],

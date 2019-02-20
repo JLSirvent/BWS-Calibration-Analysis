@@ -269,7 +269,6 @@ def process_position_old(data, parameter_file, StartTime, showplot=False, filena
     REMP_reference_threshold = eval(config.get('OPS processing parameters', 'REMP_reference_threshold'))
     References_Timming = eval(config.get('OPS processing parameters','References_Timming'))
 
-
     AngularIncrement = 2 * np.pi / SlitsperTurn
 
     threshold_reference = np.amax(data) - camelback_threshold * np.mean(data)
@@ -635,8 +634,6 @@ class ProcessRawData(QtCore.QThread):
         parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
         config.read(parameter_file)
-        IN_range = eval(config.get('OPS processing parameters', 'IN_range'))
-        OUT_range = eval(config.get('OPS processing parameters', 'OUT_range'))
         sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
         process_occlusions = eval(config.get('OPS processing parameters','Process_Occlusions'))
         compensate_eccentricity =  eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
@@ -647,17 +644,15 @@ class ProcessRawData(QtCore.QThread):
         #mat = sio.loadmat(dir_path + '/' + mat_files[0])
         mat = sio.loadmat(mat_files[0])
 
-        speed = mat['speed'][0]
+        StartTime = mat['start_t'][0]
         INorOUT = mat['INorOUT'][0]
 
         if IN is True:
             print('------- OPS Processing IN -------')
-            StartTime = IN_range[0]
             self.notifyState.emit('OPS Processing IN')
             time.sleep(0.1)
             scantype = 'IN'
         elif OUT is True:
-            StartTime = OUT_range[0]
             print('------- OPS Processing OUT -------')
             self.notifyState.emit('OPS Processing OUT')
             time.sleep(0.1)

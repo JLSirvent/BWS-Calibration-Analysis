@@ -10,12 +10,20 @@ It has been written in **Python 3.7** and is available both as a **library** and
 
 2. Python Development IDE: [PyCharm](https://www.jetbrains.com/pycharm/)
 
+3. Git for windows: [git](https://git-scm.com/downloads)
+
 For more info go to the [complete documentation (GitHub wiki)](https://github.com/LionelGarcia/BWS-diagnostic/wiki)
 
 
 
 <img src="images/BWS_application_illustration.jpg" width="800" align=center>
 
+
+In Anaconda Prompt and as Administrator:
+
+conda install -c anaconda pyqt
+conda install -c conda-forge nptdms
+conda install -c anaconda configparser
 
 
 

@@ -268,8 +268,6 @@ class CreateRawDataFolder(QtCore.QThread):
         os.makedirs(self.destination_folder + '/RAW_DATA/RAW_IN')
         os.makedirs(self.destination_folder + '/RAW_DATA/RAW_OUT')
 
-        speed = 133
-
         false = 0
 
         #tdms_files, dir_path = tdms_list_from_folder(self.TDMS_folder)
@@ -310,14 +308,14 @@ class CreateRawDataFolder(QtCore.QThread):
                                 + '__S' + str(scan_number)
                                 + '____IN.mat',
 
-                                dict(data_SA=data__s_a_in, data_SB=data__s_b_in, data_PD=data__p_d_in, speed=speed, INorOUT='IN'))
+                                dict(data_SA=data__s_a_in, data_SB=data__s_b_in, data_PD=data__p_d_in, start_t = time__in[0], INorOUT='IN'))
 
                     sio.savemat(self.destination_folder + '/RAW_DATA/RAW_OUT/SCAN__P'
                                 + str(laser_position)
                                 + '__S' + str(scan_number)
                                 + '____OUT.mat',
 
-                                dict(data_SA=data__s_a_out, data_SB=data__s_b_out, data_PD=data__p_d_out, speed=speed, INorOUT='OUT'))
+                                dict(data_SA=data__s_a_out, data_SB=data__s_b_out, data_PD=data__p_d_out, start_t = time__out[0], INorOUT='OUT'))
             else:
                 false = false + 1
 
@@ -536,11 +534,6 @@ def extract_from_tdms(path):
     data__p_d_name = eval(config.get('LabView output', 'data_PD'))
     automatic_ranging_name = eval(config.get('LabView output', 'automatic_ranging'))
 
-    range_time_in = eval(config.get('OPS processing parameters', 'IN_range'))
-    range_time_out = eval(config.get('OPS processing parameters', 'OUT_range'))
-
-
-
     if len(data__s_a_name) == 2:
 
         try:
@@ -549,33 +542,17 @@ def extract_from_tdms(path):
 
             try:
 
-                if range_time_in is 'auto':
-                    range_time_in = np.asarray([auto_range[0], auto_range[1]])
-                    range_in = np.arange(0, (range_time_in[1] - range_time_in[0]) * sampling_frequency - 1).astype(int)
-                else:
-                    glo_range_in = auto_range[1] - auto_range[0]
-                    diff_range_in = np.abs((range_time_in[1] - auto_range[1]))
-                    range_in = np.arange((range_time_in[0] - auto_range[0]) * sampling_frequency,
-                                         (glo_range_in - diff_range_in) * sampling_frequency).astype(int) - 1
+                data__s_a_in = tdms_file.object('Picoscope Data', data__s_a_name[0]).data
+                data__s_a_out = tdms_file.object('Picoscope Data', data__s_a_name[1]).data
+                data__s_b_in = tdms_file.object('Picoscope Data', data__s_b_name[0]).data
+                data__s_b_out = tdms_file.object('Picoscope Data', data__s_b_name[1]).data
+                data__p_d_in = tdms_file.object('Picoscope Data', data__p_d_name[0]).data
+                data__p_d_out = tdms_file.object('Picoscope Data', data__p_d_name[1]).data
 
-                if range_time_out is 'auto':
-                    range_time_out = np.asarray([auto_range[2], auto_range[3]])
-                    range_out = np.arange(0, (range_time_out[1] - range_time_out[0]) * sampling_frequency - 1).astype(
-                        int)
-                else:
-                    glo_range_out = auto_range[3] - auto_range[2]
-                    diff_range_out = np.abs((range_time_out[1] - auto_range[3]))
-                    range_out = np.arange((range_time_out[0] - auto_range[2]) * sampling_frequency,
-                                          (glo_range_out - diff_range_out) * sampling_frequency).astype(int) - 1
+                TimeBoundaries = tdms_file.object('Picoscope Data',automatic_ranging_name).data / sampling_frequency
 
-                data__s_a_in = tdms_file.object('Picoscope Data', data__s_a_name[0]).data[range_in]
-                data__s_a_out = tdms_file.object('Picoscope Data', data__s_a_name[1]).data[range_out]
-                data__s_b_in = tdms_file.object('Picoscope Data', data__s_b_name[0]).data[range_in]
-                data__s_b_out = tdms_file.object('Picoscope Data', data__s_b_name[1]).data[range_out]
-                data__p_d_in = tdms_file.object('Picoscope Data', data__p_d_name[0]).data[range_in]
-                data__p_d_out = tdms_file.object('Picoscope Data', data__p_d_name[1]).data[range_out]
-                time__in = (np.arange(0, data__s_a_in.size, 1)) / sampling_frequency + range_time_in[0]
-                time__out = (np.arange(0, data__s_a_out.size, 1)) / sampling_frequency + range_time_out[0]
+                time__in = (np.arange(0, data__s_a_in.size, 1)) / sampling_frequency + TimeBoundaries[0]
+                time__out = (np.arange(0, data__s_a_out.size, 1)) / sampling_frequency + TimeBoundaries[2]
 
             except KeyError:
                 data__s_a_in = -1
@@ -609,33 +586,19 @@ def extract_from_tdms(path):
 
     else:
 
-        try:
-            if range_time_in is 'auto':
-                range_time_in = [0, 0.090]
+        range_time_in = [0, 0.090]
+        range_time_out = [0.330, 0.480]
 
-            if range_time_out is 'auto':
-                range_time_out = [0.330, 0.480]
-
-            range_in = np.arange(range_time_in[0]*sampling_frequency, range_time_in[1]*sampling_frequency).astype(int)
-            range_out = np.arange(range_time_out[0] * sampling_frequency, range_time_out[1] * sampling_frequency).astype(int)
-            data__s_a_in = tdms_file.object('Picoscope Data', data__s_a_name).data[range_in]
-            data__s_a_out = tdms_file.object('Picoscope Data', data__s_a_name).data[range_out]
-            data__s_b_in = tdms_file.object('Picoscope Data', data__s_b_name).data[range_in]
-            data__s_b_out = tdms_file.object('Picoscope Data', data__s_b_name).data[range_out]
-            data__p_d_in = tdms_file.object('Picoscope Data', data__p_d_name).data[range_in]
-            data__p_d_out = tdms_file.object('Picoscope Data', data__p_d_name).data[range_out]
-            time__in = range_in/sampling_frequency
-            time__out = range_out/sampling_frequency
-
-        except KeyError:
-            data__s_a_in = -1
-            data__s_a_out = -1
-            data__s_b_in = -1
-            data__s_b_out = -1
-            data__p_d_in = -1
-            data__p_d_out = -1
-            time__in = -1
-            time__out = -1
+        range_in = np.arange(range_time_in[0]*sampling_frequency, range_time_in[1]*sampling_frequency).astype(int)
+        range_out = np.arange(range_time_out[0] * sampling_frequency, range_time_out[1] * sampling_frequency).astype(int)
+        data__s_a_in = tdms_file.object('Picoscope Data', data__s_a_name).data[range_in]
+        data__s_a_out = tdms_file.object('Picoscope Data', data__s_a_name).data[range_out]
+        data__s_b_in = tdms_file.object('Picoscope Data', data__s_b_name).data[range_in]
+        data__s_b_out = tdms_file.object('Picoscope Data', data__s_b_name).data[range_out]
+        data__p_d_in = tdms_file.object('Picoscope Data', data__p_d_name).data[range_in]
+        data__p_d_out = tdms_file.object('Picoscope Data', data__p_d_name).data[range_out]
+        time__in = range_in/sampling_frequency
+        time__out = range_out/sampling_frequency
 
     return data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out
 

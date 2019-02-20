@@ -186,23 +186,23 @@ class plot(mplCanvas):
         black = [0.3, 0.3, 0.3]
 
         parameter_file = utils.resource_path('data/parameters.cfg')
-
+        Dec = 10
         if len(self.x_IN_A) == 200:
 
             ax1 = self.fig.add_subplot(221)
-            ax1.plot(self.t1, self.x_IN_A, linewidth=0.5)
+            ax1.plot(self.t1[::Dec], self.x_IN_A[::Dec], linewidth=0.5)
             prairie.style(ax1)
 
             ax2 = self.fig.add_subplot(222)
-            ax2.plot(self.t1, self.y_IN_A, linewidth=0.5)
+            ax2.plot(self.t1[::Dec], self.y_IN_A[::Dec], linewidth=0.5)
             prairie.style(ax2)
 
-            ax3 = self.fig.add_subplot(223, sharex = ax1)
-            ax3.plot(self.t2, self.x_OUT_A, linewidth=0.5)
+            ax3 = self.fig.add_subplot(223)#, sharex = ax1)
+            ax3.plot(self.t2[::Dec], self.x_OUT_A[::Dec], linewidth=0.5)
             prairie.style(ax3)
 
-            ax4 = self.fig.add_subplot(224, sharex = ax2)
-            ax4.plot(self.t2, self.y_OUT_A, linewidth=0.5)
+            ax4 = self.fig.add_subplot(224)#, sharex = ax2)
+            ax4.plot(self.t2[::Dec], self.y_OUT_A[::Dec], linewidth=0.5)
             prairie.style(ax4)
 
             self.fig.tight_layout()
@@ -214,7 +214,7 @@ class plot(mplCanvas):
             try:
                 P = ops.process_position(self.x_IN_A,  parameter_file, self.t1[0], return_processing=True, INOUT='IN')
                 ax1.axhspan(0, P[8], color='black', alpha=0.05)
-                ax1.plot( P[0], P[1], linewidth=0.5)
+                ax1.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax1.plot( P[2], P[3], '.', markersize=2)
                 ax1.plot( P[4], P[5], '.', markersize=2)
                 ax1.plot( P[6], P[7], '-', linewidth=0.5, color=black)
@@ -224,7 +224,7 @@ class plot(mplCanvas):
                 ax1.plot( refX, refY, '.', markersize=5, color = '#f93eed')
                 # ----
             except:
-                ax1.plot(1e3*self.t1, self.x_IN_A, linewidth=0.5)
+                ax1.plot(1e3*self.t1[::Dec], self.x_IN_A[::Dec], linewidth=0.5)
                 print('Error processing Sensor A_IN')
             ax1.set_title('OPS processing SA - IN', loc='left')
             ax1.set_xlabel('Time (ms)')
@@ -234,11 +234,11 @@ class plot(mplCanvas):
 
             # SENSOR B IN
             # -----------
-            ax2 = self.fig.add_subplot(323, sharex=ax1)
+            ax2 = self.fig.add_subplot(323)#, sharex=ax1)
             try:
                 P = ops.process_position(self.y_IN_A, parameter_file, self.t1[0], return_processing=True, INOUT='IN')
                 ax2.axhspan(0, P[8], color='black', alpha=0.05)
-                ax2.plot( P[0], P[1], linewidth=0.5)
+                ax2.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax2.plot( P[2], P[3], '.', markersize=2)
                 ax2.plot( P[4], P[5], '.', markersize=2)
                 ax2.plot( P[6], P[7], '-', linewidth=0.5, color=black)
@@ -262,7 +262,7 @@ class plot(mplCanvas):
             try:
                 P = ops.process_position(self.x_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
                 ax3.axhspan(0, P[8], color='black', alpha=0.05)
-                ax3.plot( P[0], P[1], linewidth=0.5)
+                ax3.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax3.plot( P[2], P[3], '.', markersize=2)
                 ax3.plot( P[4], P[5], '.', markersize=2)
                 ax3.plot( P[6], P[7], '-', linewidth=0.5, color=black)
@@ -272,7 +272,7 @@ class plot(mplCanvas):
                 ax3.plot(refX, refY, '.', markersize=5, color = '#f93eed')
                 # ----
             except:
-                ax3.plot(1e3*self.t2, self.x_OUT_A, linewidth=0.5)
+                ax3.plot(1e3*self.t2[::Dec], self.x_OUT_A[::Dec], linewidth=0.5)
                 print('Error processing Sensor A_OUT')
             ax3.set_title('OPS processing SA - OUT', loc='left')
             ax3.set_xlabel('Time (s)')
@@ -281,11 +281,11 @@ class plot(mplCanvas):
 
             # SENSOR B OUT
             # ------------
-            ax4 = self.fig.add_subplot(324, sharex = ax3)
+            ax4 = self.fig.add_subplot(324)#, sharex = ax3)
             try:
                 P = ops.process_position(self.y_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
                 ax4.axhspan(0, P[8], color='black', alpha=0.05)
-                ax4.plot( P[0], P[1], linewidth=0.5)
+                ax4.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax4.plot( P[2], P[3], '.', markersize=2)
                 ax4.plot( P[4], P[5], '.', markersize=2)
                 ax4.plot( P[6], P[7], '-', linewidth=0.5, color=black)
@@ -304,14 +304,14 @@ class plot(mplCanvas):
 
             # PHOTODIODE IN
             # -------------
-            ax5 = self.fig.add_subplot(325,sharex=ax1)
-            ax5.plot(1e3 * self.t1, self.pd1, linewidth=1)
+            ax5 = self.fig.add_subplot(325)#,sharex=ax1)
+            ax5.plot(1e3 * self.t1[::Dec], self.pd1[::Dec], linewidth=1)
             ax5.set_title('Processing PH - IN', loc='left')
             ax5.set_xlabel('Time (ms)')
             ax5.set_ylabel('a.u.')
             try:
                 occ_IN = ops.find_occlusions(self.pd1, IN=True, StartTime=self.t1[0], return_processing=True)
-                ax5.plot(1e3 * occ_IN[2], occ_IN[3], linewidth=1)
+                ax5.plot(1e3 * occ_IN[2][::Dec], occ_IN[3][::Dec], linewidth=1)
                 ax5.plot(1e3 * occ_IN[0], occ_IN[1], '.', markersize=3, color=black)
                 ax5.legend(['PD data', 'Detected occlusions'])
             except:
@@ -320,14 +320,14 @@ class plot(mplCanvas):
 
             # PHOTODIODE OUT
             # --------------
-            ax6 = self.fig.add_subplot(326, sharex=ax3)
-            ax6.plot(1e3 * self.t2, self.pd2, linewidth=1)
+            ax6 = self.fig.add_subplot(326)#, sharex=ax3)
+            ax6.plot(1e3 * self.t2[::Dec], self.pd2[::Dec], linewidth=1)
             ax6.set_title('Processing PH - OUT', loc='left')
             ax6.set_xlabel('Time (ms)')
             ax6.set_ylabel('a.u.')
             try:
                 occ_OUT = ops.find_occlusions(self.pd2, IN=False, StartTime=self.t2[0], return_processing=True)
-                ax6.plot(1e3 * occ_OUT[2], occ_OUT[3], linewidth=1)
+                ax6.plot(1e3 * occ_OUT[2][::Dec], occ_OUT[3][::Dec], linewidth=1)
                 ax6.plot(1e3 * occ_OUT[0], occ_OUT[1], '.', markersize=3, color=black)
             except:
                 print('Error detecting Occlusions OUT')
