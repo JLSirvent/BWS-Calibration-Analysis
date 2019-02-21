@@ -27,8 +27,15 @@ conda install -c conda-forge nptdms
 
 pip install configparser
 
+**Add Environment Variables:**
 
+path\Anaconda3
 
+path\Anaconda3\Scripts
+
+path\Anaconda3\Library\bin
+
+where 'path' is the Anaconda3 installation directory.
 
 
 
