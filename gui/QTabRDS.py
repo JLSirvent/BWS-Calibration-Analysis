@@ -171,10 +171,11 @@ class plot(mplCanvas):
                 xtimeA = 1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset]
                 xtimeB = 1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset]
 
-                ax2.plot(xtimeA, rel_distances_A, '.',
-                         color=color_A)
-                ax2.plot(xtimeB, rel_distances_B, '.',
-                         color=color_B)
+                ax2.plot(xtimeA, rel_distances_A, '.', color=color_A)
+                ax2.plot(xtimeB, rel_distances_B, '.', color=color_B)
+
+                #ax2.plot(rel_distances_A, '.', color=color_A)
+                #ax2.plot(rel_distances_B, '.', color=color_B)
 
             ax2.set_xlabel('Time (ms)')
             ax2.set_ylabel('Relative distance')

@@ -328,7 +328,7 @@ def process_position_old(data, parameter_file, StartTime, showplot=False, filena
         Crosingpos[0, i] = (Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
 
         # if showplot is True or showplot is 1:
-        A = np.append(A, Threshold);
+        A = np.append(A, Threshold)
 
         # Move to next window:
         IndexDwn = IndexDwn + 1
@@ -636,12 +636,10 @@ class ProcessRawData(QtCore.QThread):
         config.read(parameter_file)
         sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
         process_occlusions = eval(config.get('OPS processing parameters','Process_Occlusions'))
-        compensate_eccentricity =  eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
-
-        #mat_files, dir_path = utils.mat_list_from_folder(self.raw_data_folder)
+        compensate_eccentricity = eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
+        tank_centre = eval(config.get('Geometry','stages_position_at_tank_center'))
         mat_files = utils.mat_list_from_folder_sorted(self.raw_data_folder)
 
-        #mat = sio.loadmat(dir_path + '/' + mat_files[0])
         mat = sio.loadmat(mat_files[0])
 
         StartTime = mat['start_t'][0]
@@ -767,11 +765,13 @@ class ProcessRawData(QtCore.QThread):
         elif OUT is True:
             filename = 'PROCESSED_OUT.mat'
 
+        # Before saving --> Normalize positions wrt tank center
+        laser_position = tank_centre - np.asarray(laser_position)
+
         # ==========================================================================
         # Matfile Saving
         # ==========================================================================
         sio.savemat(self.destination_folder + '/' + filename,
-
                     {'angular_position_SA': angular_position_SA,
                      'angular_position_SB': angular_position_SB,
                      'eccentricity': eccentricity,
@@ -784,7 +784,6 @@ class ProcessRawData(QtCore.QThread):
                      'speed_SB': speed_SB,
                      'time_SA': time_SA,
                      'time_SB': time_SB},
-
                     do_compression=True)
 
         # log.log_file_saved(filename)

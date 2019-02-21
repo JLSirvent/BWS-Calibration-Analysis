@@ -44,7 +44,6 @@ from gui.mplCanvas import mplCanvas
 PLOT_WIDTH = 7
 PLOT_HEIGHT = 6.5
 
-
 class QTabCalibration(QWidget):
 
     def __init__(self, in_or_out, parent=None):
@@ -150,14 +149,14 @@ class plot(mplCanvas):
                 config.read(parameter_file)
                 positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
                 positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-                tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
+                #tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
                 self.idxs = np.argsort(laser_position)
                 occlusion_position = occlusion_position[self.idxs]
                 laser_position = laser_position[self.idxs]
                 self.focus = np.where(self.idxs == self.focus)[0]
 
-                laser_position = -laser_position + tank_center
+                #laser_position = -laser_position + tank_center
 
                 # DeleteCorrection
                 # CorrectIndex = np.where((laser_position <= 1.5) & (laser_position >= -36.5))
@@ -169,6 +168,7 @@ class plot(mplCanvas):
                 else:
                     self.y_OUT_A = laser_position
                     self.x_OUT_A = occlusion_position
+
 
                 unique_laser_position = np.unique(laser_position)
                 occlusion_position_mean = []
@@ -200,9 +200,9 @@ class plot(mplCanvas):
                 prairie.use()
                 ax2 = self.fig.add_subplot(2, 2, 4)
                 residuals = residuals[off2[0]:off2[1]]
-                dt.make_histogram(1e3 * residuals, [-300, 300], '\u03BCm', axe=ax2, color=self.color)
+                dt.make_histogram(1e3 * residuals, [-50, 50], '\u03BCm', axe=ax2, color=self.color)
                 ax2.set_title('Wire position error histogram', loc='left')
-                ax2.set_xlabel('Wire position error (\u03BCm)')
+                ax2.set_xlabel('Wire position error [\u03BCm]')
                 ax2.set_ylabel('Occurrence')
                 prairie.style(ax2)
 
@@ -212,10 +212,10 @@ class plot(mplCanvas):
                 print(residuals_smooth.size)
                 print(laser_position.size)
                 ax3.plot(laser_position, 1e3 * residuals_smooth, color=self.color)
-                ax3.set_ylim([-300, 300])
+                ax3.set_ylim([-50, 50])
                 ax3.set_title('Wire position error', loc='left')
-                ax3.set_ylabel('Wire position error (\u03BCm)')
-                ax3.set_xlabel('Laser position (mm)')
+                ax3.set_ylabel('Wire position error [\u03BCm]')
+                ax3.set_xlabel('Laser position [mm]')
                 prairie.style(ax3)
 
                 equation = "{:3.2f}".format(param[1]) + '-' + "{:3.2f}".format(
@@ -233,8 +233,8 @@ class plot(mplCanvas):
                 self.foc_marker[i], = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)
                 self.ax1.set_title('BWS Angular to Projected Motion', loc='left')
 
-                self.ax1.set_xlabel('Angular position at laser crossing (rad)')
-                self.ax1.set_ylabel('Laser position (mm)')
+                self.ax1.set_xlabel('Angular position [rad]')
+                self.ax1.set_ylabel('Laser position [mm]')
                 prairie.style(self.ax1)
                 self.fig.tight_layout()
             self.ax1.legend()

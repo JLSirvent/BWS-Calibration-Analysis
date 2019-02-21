@@ -39,7 +39,7 @@ from matplotlib import pyplot as plt
 
 from numpy import arange
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QFileDialog, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QFileDialog, QVBoxLayout, QHBoxLayout,QMessageBox
 
 from lib import utils
 from lib import ops_processing as ops
@@ -52,6 +52,30 @@ from gui import Calibration
 def cut(off, data):
     return data[off:data.size-off]
 
+class Warning_Dialog(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.title = 'BWS-Calibration Application'
+        self.left = 500
+        self.top = 500
+        self.width = 320
+        self.height = 200
+        self.user_choice = None
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        buttonReply = QMessageBox.question(self, 'BWS-Calibration Application', "There is existing data available. Do you want to overwrite it?",
+                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if buttonReply == QMessageBox.Yes:
+            self.user_choice = True
+        else:
+            self.user_choice = False
+
+        self.show()
 
 class QProcessedAnalysisTab(QWidget):
 
@@ -72,13 +96,10 @@ class QProcessedAnalysisTab(QWidget):
         self.TabWidgetPlotting = QTabWidgetPlotting.QTabWidgetPlotting()
         self.FileDescriptionTable = QFileDescriptionTable.QFileDescriptionTable()
         self.CalibrationInformation = QCalibrationInformation.QCalibrationInformation(parent=self)
-        # self.Multiple_folder_selection = QMultipleFolderSelection.QMultipleFolderSelection()
         self.mainLayout = QVBoxLayout
 
         self.FileDescriptionTable.save_and_update.clicked.connect(self.save_and_update)
         self.FileDescriptionTable.see_raw_button.clicked.connect(self.test_tdms)
-        #self.FileDescriptionTable.set_parameters_button.clicked.connect(self.show_parameters_window)
-        #self.FileDescriptionTable.dump_button.clicked.connect(self.dump_actual_scan)
 
         # We use a parameter file
         parameter_file = utils.resource_path('data/parameters.cfg')
@@ -113,10 +134,8 @@ class QProcessedAnalysisTab(QWidget):
         self.CalibrationInformation.tdms_data_selection.label_select_folder.selectionChanged.connect(self.set_TDMS_folder)
         self.CalibrationInformation.processed_data_selection.button_select_folder.pressed.connect(self.actualise_all)
 
-        #self.FileDescriptionTable.table.clicked.connect(self.select_index)
         self.FileDescriptionTable.table.itemClicked.connect(self.ClickOnItem)
 
-        #self.TabWidgetPlotting.tab_eccentricity.actualise_ax()
 
         self.mainLayout = QVBoxLayout()
 
@@ -151,35 +170,41 @@ class QProcessedAnalysisTab(QWidget):
 
     def onStart(self):
 
-        #####make security ## ########
-
-        test = utils.tdms_list_from_folder(self.actual_TDMS_folder)
-
-        if type(test) is int:
-            self.parent.LogDialog.add('Specified TDMS folder does not contain .tdms files', 'error')
-
-        elif type(utils.extract_from_tdms(self.actual_TDMS_folder + '/' + test[0][0])[0]) is int:
-            self.parent.LogDialog.add(
-                'TDMS file not loaded because of a key error - try to set [LabView output] in the parameters file',
-                'error')
-
-        elif not os.path.exists(self.actual_destination_folder) or self.actual_destination_folder == '...':
-            self.parent.LogDialog.add(
-                'Please specify a destination folder',
-                'error')
-
+        if self.CalibrationInformation.import_button.isEnabled():
+            choice = Warning_Dialog().user_choice
         else:
+            choice = True
 
-            self.done = False
+        if choice:
+            #####make security ## ########
 
-            self.myLongTask = utils.CreateRawDataFolder(self.actual_TDMS_folder, self.actual_destination_folder, self)
-            self.myLongTask.notifyProgress.connect(self.onProgress)
-            self.myLongTask.notifyState.connect(self.onState)
-            self.myLongTask.notifyFile.connect(self.onFile)
-            self.CalibrationInformation.processcalibration_button.setEnabled(False)
-            self.myLongTask.start()
+            test = utils.tdms_list_from_folder(self.actual_TDMS_folder)
 
-            self.parent.LogDialog.add('Starting ' + self.actual_TDMS_folder + ' conversion', 'info')
+            if type(test) is int:
+                self.parent.LogDialog.add('Specified TDMS folder does not contain .tdms files', 'error')
+
+            elif type(utils.extract_from_tdms(self.actual_TDMS_folder + '/' + test[0][0])[0]) is int:
+                self.parent.LogDialog.add(
+                    'TDMS file not loaded because of a key error - try to set [LabView output] in the parameters file',
+                    'error')
+
+            elif not os.path.exists(self.actual_destination_folder) or self.actual_destination_folder == '...':
+                self.parent.LogDialog.add(
+                    'Please specify a destination folder',
+                    'error')
+
+            else:
+
+                self.done = False
+
+                self.myLongTask = utils.CreateRawDataFolder(self.actual_TDMS_folder, self.actual_destination_folder, self)
+                self.myLongTask.notifyProgress.connect(self.onProgress)
+                self.myLongTask.notifyState.connect(self.onState)
+                self.myLongTask.notifyFile.connect(self.onFile)
+                self.CalibrationInformation.processcalibration_button.setEnabled(False)
+                self.myLongTask.start()
+
+                self.parent.LogDialog.add('Starting ' + self.actual_TDMS_folder + ' conversion', 'info')
 
     def RAW_IN(self):
 
@@ -683,46 +708,6 @@ class QProcessedAnalysisTab(QWidget):
 
             else:
                 self.parent.LogDialog.add('TDMS folder name and PROCESSED folder name are matching', 'info')
-
-    def dump_actual_scan(self):
-
-        final_dictionary = {}
-
-        matfile = sio.loadmat(self.actual_PROCESSED_folder + '/PROCESSED_IN.mat', struct_as_record=False, squeeze_me=True)
-        keys = list(matfile.keys())[3::]
-
-        for key in keys:
-            data = matfile[key]
-            if len(data) != 0:
-                data = np.delete(data, self.actual_index)
-
-            final_dictionary[key] = data
-
-        sio.savemat(self.actual_PROCESSED_folder + '/PROCESSED_IN.mat', final_dictionary)
-
-        final_dictionary = {}
-
-        matfile = sio.loadmat(self.actual_PROCESSED_folder + '/PROCESSED_OUT.mat', struct_as_record=False,
-                              squeeze_me=True)
-        keys = list(matfile.keys())[3::]
-
-        for key in keys:
-            data = matfile[key]
-            if len(data) != 0:
-                data = np.delete(data, self.actual_index)
-
-            final_dictionary[key] = data
-
-        sio.savemat(self.actual_PROCESSED_folder + '/PROCESSED_OUT.mat', final_dictionary)
-
-        if not os.path.exists(self.actual_TDMS_folder + '/DUMPED'):
-            os.makedirs(self.actual_TDMS_folder + '/DUMPED')
-
-        shutil.move(self.actual_TDMS_folder + '/' + self.tdms_file_list[0][self.actual_index], self.actual_TDMS_folder + '/DUMPED')
-
-        self.CalibrationInformation.set_PROCESSED_folder(self.actual_PROCESSED_folder)
-        self.CalibrationInformation.set_TDMS_folder(self.actual_TDMS_folder)
-        self.actualise_all()
 
     def show_parameters_window(self):
         self.parent.LogDialog.add('Opening ' + utils.resource_path('data/parameters.cfg') + ' ...', 'info')

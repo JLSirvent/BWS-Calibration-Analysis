@@ -34,7 +34,7 @@ from lib import utils
 from numpy import arange
 from PyQt5 import QtGui, QtCore
 from gui import QFolderSelectionWidget
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem, QComboBox, QGroupBox, QListWidget
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem, QComboBox, QGroupBox, QListWidget, QRadioButton
 
 
 def cut(off, data):
@@ -73,6 +73,7 @@ class QMultipleFolderSelection(QWidget):
             self.folder_selection.set_actual_folder(file)
 
     def append_folder_to(self):
+        self.folder_selection.ProcessButton.setEnabled(True)
         self.folder_to.append(self.actual_selected_folder_from)
 
     def append_all_folder_to(self):
@@ -89,7 +90,6 @@ class QMultipleFolderSelection(QWidget):
 
     def get_folder_list(self):
         return self.folder_to.subfolder_list
-
 
 class QFolderSelectionFrom(QWidget):
 
@@ -125,38 +125,54 @@ class QFolderSelectionFrom(QWidget):
         self.calibration_selection_cb.setEnabled(False)
         self.calibration_selection_cb.currentIndexChanged.connect(self.set_actual_calibration_folder)
 
-        self.addButton = QPushButton('Add')
-        self.addButton.setFixedSize(50, 25)
+        self.addButton = QPushButton('Add Calibration')
+        self.addButton.setEnabled(False)
+
         self.addButton.clicked.connect(self.add_calibration_to_list)
 
-        self.clearButton = QPushButton('Clear')
+        self.clearButton = QPushButton('Clear List')
         self.clearButton.clicked.connect(self.clear_calibration_list)
-        self.clearButton.setFixedSize(50, 25)
 
         self.calibration_list_widget = QListWidget()
         self.calibration_list_widget.resize(300,120)
 
+        self.radio_independent=QRadioButton('Individual Fits')
+        self.radio_global = QRadioButton('Global Fit')
+        self.radio_independent.setChecked(True)
+
         self.ProcessButton = QPushButton('PROCESS analysis')
+        self.ProcessButton.setEnabled(False)
         # ---------------------------------------------
+
+        self.fit_type_box = QGroupBox('Fit Type')
+        self.fit_type_box_layout = QHBoxLayout(self)
+        #self.fit_type_box_layout.addStretch(1)
+        self.fit_type_box_layout.addWidget(self.radio_independent)
+        self.fit_type_box_layout.addWidget(self.radio_global)
+        self.fit_type_box.setLayout(self.fit_type_box_layout)
 
         self.select_box = QGroupBox('Calibrations Selection')
         self.select_box_layout = QVBoxLayout(self)
-        self.select_box_layout.addStretch(1)
+        #self.select_box_layout.addStretch(1)
         self.select_box_layout.addWidget(self.scanner_selection_cb)
         self.select_box_layout.addWidget(self.calibration_selection_cb)
 
         self.select_box_layout2 = QHBoxLayout(self)
-        self.select_box_layout2.addWidget(self.addButton,0, QtCore.Qt.AlignRight)
-        self.select_box_layout2.addWidget(self.clearButton,0, QtCore.Qt.AlignRight)
+        self.select_box_layout2.addWidget(self.addButton)
+        self.select_box_layout2.addWidget(self.clearButton)
 
         self.select_box_layout.addLayout(self.select_box_layout2)
         self.select_box_layout.addWidget(self.calibration_list_widget)
+        self.select_box_layout.addWidget(self.fit_type_box)
         self.select_box_layout.addWidget(self.ProcessButton)
 
         self.select_box.setLayout(self.select_box_layout)
         self.mainLayout.addWidget(self.select_box)
 
         self.setLayout(self.mainLayout)
+        #self.setFixedHeight(600)
+
+
 
     def set_actual_scanner_folder(self):
         try:
@@ -172,6 +188,12 @@ class QFolderSelectionFrom(QWidget):
             print('Error set_actual_scanner_folder')
 
     def set_actual_calibration_folder(self):
+
+        if self.calibration_selection_cb.currentIndex() == 0:
+            self.addButton.setEnabled(False)
+        else:
+            self.addButton.setEnabled(True)
+
         try:
             full_directory = self.directory + self.scanner_selection_cb.currentText() + '/ProcessedData/' + self.calibration_selection_cb.currentText() + ' PROCESSED'
             if os.path.exists(full_directory):
@@ -182,10 +204,12 @@ class QFolderSelectionFrom(QWidget):
     def add_calibration_to_list(self):
         self.calibration_list.append(self.actual_calibration_folder)
         self.update_calibration_list()
+        self.ProcessButton.setEnabled(True)
 
     def clear_calibration_list(self):
         self.calibration_list = []
         self.update_calibration_list()
+        self.ProcessButton.setEnabled(False)
 
     def update_calibration_list(self):
         self.calibration_list_widget.clear()

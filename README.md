@@ -19,11 +19,14 @@ For more info go to the [complete documentation (GitHub wiki)](https://github.co
 <img src="images/BWS_application_illustration.jpg" width="800" align=center>
 
 
-In Anaconda Prompt and as Administrator:
+**Type in Anaconda Prompt and as Administrator:**
 
 conda install -c anaconda pyqt
+
 conda install -c conda-forge nptdms
-conda install -c anaconda configparser
+
+pip install configparser
+
 
 
 
