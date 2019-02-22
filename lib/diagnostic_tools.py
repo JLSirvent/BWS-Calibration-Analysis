@@ -103,7 +103,7 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
         else:
             axe.hist(data, bins=binshist, normed=1, alpha=0.3)
 
-        axe.set_xlim([data_range[0], data_range[1]])
+        #axe.set_xlim([data_range[0], data_range[1]])
         (mu, sigma) = norm.fit(data)
         # bins = np.arange(data_range[0], data_range[1], 0.1)
         bins = np.arange(data_range[0], data_range[1], (data_range[1] - data_range[0]) / 500)

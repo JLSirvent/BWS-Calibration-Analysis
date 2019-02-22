@@ -67,6 +67,8 @@ class QTabCalibration(QWidget):
         self.y_IN_A = np.ones(200)
         self.y_OUT_A = np.ones(200)
 
+        self.CalibCoeff = []
+
         self.focus = 0
         self.setLayout(main_layout)
 
@@ -94,7 +96,7 @@ class QTabCalibration(QWidget):
         self.plot.y_OUT_A = self.y_OUT_A
         self.plot.in_or_out = self.in_or_out
         self.plot.focus = self.focus
-        self.plot.compute_initial_figure()
+        self.CalibCoeff = self.plot.compute_initial_figure()
         self.plot.draw()
 
     def wait(self):
@@ -128,6 +130,7 @@ class plot(mplCanvas):
     def compute_initial_figure(self):
         try:
             self.fig.clear()
+            Parameters = []
             for i in range(0,2):
                 print(i)
                 if i == 0:
@@ -199,8 +202,15 @@ class plot(mplCanvas):
                 plt.figure(figsize=(6.5, 7.5))
                 prairie.use()
                 ax2 = self.fig.add_subplot(2, 2, 4)
-                residuals = residuals[off2[0]:off2[1]]
-                dt.make_histogram(1e3 * residuals, [-50, 50], '\u03BCm', axe=ax2, color=self.color)
+                residuals = 1e3 * residuals[off2[0]:off2[1]]
+
+                ResidMean = np.mean(residuals)
+                ResidSTD = np.std(residuals)
+
+                Lim_minus = ResidMean - 10*ResidSTD
+                Lim_plus = ResidMean + 10*ResidSTD
+
+                dt.make_histogram(residuals, [Lim_minus, Lim_plus], '\u03BCm', axe=ax2, color=self.color)
                 ax2.set_title('Wire position error histogram', loc='left')
                 ax2.set_xlabel('Wire position error [\u03BCm]')
                 ax2.set_ylabel('Occurrence')
@@ -208,11 +218,11 @@ class plot(mplCanvas):
 
                 ax3 = self.fig.add_subplot(2, 2, 3)
                 residuals_smooth = savgol_filter(np.asarray(residuals),9, 2)
-                ax3.plot(laser_position, 1e3 * residuals, '.', color=self.color, markersize=6, alpha = 0.6)
+                ax3.plot(laser_position, residuals, '.', color=self.color, markersize=6, alpha = 0.6)
                 print(residuals_smooth.size)
                 print(laser_position.size)
-                ax3.plot(laser_position, 1e3 * residuals_smooth, color=self.color)
-                ax3.set_ylim([-50, 50])
+                ax3.plot(laser_position, residuals_smooth, color=self.color)
+                #ax3.set_ylim([-50, 50])
                 ax3.set_title('Wire position error', loc='left')
                 ax3.set_ylabel('Wire position error [\u03BCm]')
                 ax3.set_xlabel('Laser position [mm]')
@@ -226,7 +236,7 @@ class plot(mplCanvas):
                 print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))
                 print('Calculated Fork_Length: ' + "{:3.5f}".format(param[2]))
                 print('Calculated Fork_Phase: ' + "{:3.5f}".format(param[0]))
-
+                Parameters.append(param)
                 self.ax1 = self.fig.add_subplot(2, 1, 1)
                 self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color=self.color, label = LegendText)
                 self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=6, alpha = 0.6)
@@ -241,6 +251,7 @@ class plot(mplCanvas):
         except:
             print('Error Calibration!')
 
+        return Parameters
 
     def refocus(self, index):
         self.foc_marker[0].remove()

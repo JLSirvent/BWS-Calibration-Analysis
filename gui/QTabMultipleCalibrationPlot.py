@@ -168,7 +168,7 @@ class plot(mplCanvas):
             for i in np.arange(0,len(x_all1)):
                 colorVal = scalarMap.to_rgba(values[cnt])
                 Residuals = 1e3 * (y_all1[i] - utils.theoretical_laser_position(x_all1[i], popt[0], popt[1], popt[2]))
-                ax2.plot(x_all1[i],Residuals,'.', color = colorVal)
+                ax2.plot(y_all1[i],Residuals,'.', color = colorVal)
 
                 ResidMean = np.mean(Residuals)
                 ResidSTD = np.std(Residuals)

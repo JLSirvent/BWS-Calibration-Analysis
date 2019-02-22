@@ -29,8 +29,12 @@ from __future__ import unicode_literals
 from lib import utils
 from gui import QFolderSelectionWidget
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar, QCheckBox
+
 import configparser
 import os
+import numpy as np
+
+from matplotlib import pyplot as plt
 
 
 class QCalibrationInformation(QWidget):
@@ -184,6 +188,18 @@ class QCalibrationInformation(QWidget):
                 self.values[4].setText(str(info[5]))
                 self.values[5].setText(str(info[1]))
                 return 0
+
+    def set_PROCESSED_folder_V2(self, calibration):
+
+        N = 10
+        spe = np.convolve(1e3*calibration.speed_IN_SA[0], np.ones((N,)) / N, mode='valid')
+
+        self.values[0].setText(str(np.round(np.max(spe))))
+        self.values[1].setText(str(np.max(calibration.laser_position_IN)))
+        self.values[2].setText(str(np.min(calibration.laser_position_IN)))
+        self.values[3].setText(str(np.max(np.abs(np.diff(calibration.laser_position_IN)))))
+        self.values[4].setText(str(len(set(calibration.scan_number_IN))))
+        self.values[5].setText(str(len(calibration.laser_position_IN)))
 
     def set_TDMS_folder(self, file):
         self.tdms_data_folder = file

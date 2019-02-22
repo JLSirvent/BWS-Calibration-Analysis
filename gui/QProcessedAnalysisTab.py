@@ -29,6 +29,7 @@ from __future__ import unicode_literals
 
 import os
 import sys
+import csv
 import time
 import shutil
 import numpy as np
@@ -243,15 +244,15 @@ class QProcessedAnalysisTab(QWidget):
             self.CalibrationInformation.progressBar.reset()
             self.RAW_OUT()
 
-
         elif state == 'done OUT':
             self.CalibrationInformation.processcalibration_button.setEnabled(True)
             utils.create_processed_data_folder(self.actual_TDMS_folder, destination_folder=self.actual_destination_folder, force_overwrite='y')
             self.CalibrationInformation.progressBar.reset()
-
+            # When finished, load current calibration results
+            self.actualise_all()
 
     def onFile(self, file):
-        self.CalibrationInformation.label_file.setText(file)
+        self.CalibrationInformation.label_file.setText(file.split('/')[-1])
 
     def show_parameters_window(self):
         os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
@@ -447,122 +448,128 @@ class QProcessedAnalysisTab(QWidget):
         self.actualise_all()
 
     def actualise_all(self):
-        info_set_bool = self.CalibrationInformation.set_PROCESSED_folder(self.actual_PROCESSED_folder)
 
-        if info_set_bool == -1:
-            self.parent.LogDialog.add('PROCESSED info not found in this folder', 'error')
+        self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
 
-        else:
+        self.CalibrationInformation.set_PROCESSED_folder_V2(self.calibration)
 
-            self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
+        self.tdms_file_list = utils.tdms_list_from_folder(self.actual_TDMS_folder)
 
-            self.tdms_file_list = utils.tdms_list_from_folder(self.actual_TDMS_folder)
+        self.actualise_file_table()
 
-            self.actualise_file_table()
+        # OUT POSITIONS CORRECTION:
+        # -------------------------
+        #self.calibration.occlusion_OUT = np.pi/2 - self.calibration.occlusion_OUT
+        #self.calibration.angular_position_SA_OUT = np.pi/2 - self.calibration.angular_position_SA_OUT
+        #self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
 
-            # OUT POSITIONS CORRECTION:
-            # -------------------------
-            #self.calibration.occlusion_OUT = np.pi/2 - self.calibration.occlusion_OUT
-            #self.calibration.angular_position_SA_OUT = np.pi/2 - self.calibration.angular_position_SA_OUT
-            #self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
+        Idx = np.where(self.calibration.data_valid == 1)
+        print('fine index found')
 
-            Idx = np.where(self.calibration.data_valid == 1)
-            print('fine index found')
+        # SET BOUNDARIES OF CALIBRATION:
+        # ------------------------------
+        try:
+            SIndex = 0
+            Idxin  = np.where((self.calibration.angular_position_SA_IN[SIndex][0:self.calibration.angular_position_SA_IN[SIndex].size - 20] > np.min(self.calibration.occlusion_IN[Idx])) & (self.calibration.angular_position_SA_IN[SIndex][0:self.calibration.angular_position_SA_IN[SIndex].size - 20] < np.max(self.calibration.occlusion_IN[Idx])))
+            Idxout = np.where((self.calibration.angular_position_SA_OUT[SIndex][0:self.calibration.angular_position_SA_OUT[SIndex].size - 20] > np.min(self.calibration.occlusion_OUT[Idx])) & (self.calibration.angular_position_SA_OUT[SIndex][0:self.calibration.angular_position_SA_OUT[SIndex].size - 20]  < np.max(self.calibration.occlusion_OUT[Idx])))
+            Boundin =  [self.calibration.time_IN_SA[SIndex][np.min(Idxin)], self.calibration.time_IN_SA[SIndex][np.max(Idxin)]]
+            Boundout = [self.calibration.time_OUT_SA[SIndex][np.min(Idxout)], self.calibration.time_OUT_SA[SIndex][np.max(Idxout)]]
+        except:
+            print('Error determining calibration boundaries')
+            Boundin= [0,0]
+            Boundout =[0,0]
 
-            # SET BOUNDARIES OF CALIBRATION:
-            # ------------------------------
-            try:
-                SIndex = 0
-                Idxin  = np.where((self.calibration.angular_position_SA_IN[SIndex][0:self.calibration.angular_position_SA_IN[SIndex].size - 20] > np.min(self.calibration.occlusion_IN[Idx])) & (self.calibration.angular_position_SA_IN[SIndex][0:self.calibration.angular_position_SA_IN[SIndex].size - 20] < np.max(self.calibration.occlusion_IN[Idx])))
-                Idxout = np.where((self.calibration.angular_position_SA_OUT[SIndex][0:self.calibration.angular_position_SA_OUT[SIndex].size - 20] > np.min(self.calibration.occlusion_OUT[Idx])) & (self.calibration.angular_position_SA_OUT[SIndex][0:self.calibration.angular_position_SA_OUT[SIndex].size - 20]  < np.max(self.calibration.occlusion_OUT[Idx])))
-                Boundin =  [self.calibration.time_IN_SA[SIndex][np.min(Idxin)], self.calibration.time_IN_SA[SIndex][np.max(Idxin)]]
-                Boundout = [self.calibration.time_OUT_SA[SIndex][np.min(Idxout)], self.calibration.time_OUT_SA[SIndex][np.max(Idxout)]]
-            except:
-                print('Error determining calibration boundaries')
-                Boundin= [0,0]
-                Boundout =[0,0]
+        print('fine index found2')
 
-            print('fine index found2')
+        if self.CalibrationInformation.chkCalibrations.isChecked():
+            # CALIBRATION IN-OUT
+            # ------------------
+            self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
+                                       self.calibration.occlusion_IN[Idx],
+                                       self.calibration.laser_position_IN[Idx],
+                                       self.calibration.occlusion_OUT[Idx],
+                                       self.calibration.laser_position_OUT[Idx])
 
-            if self.CalibrationInformation.chkCalibrations.isChecked():
-                # CALIBRATION IN
-                # --------------
-                self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
-                                           self.calibration.occlusion_IN[Idx],
-                                           self.calibration.laser_position_IN[Idx],
-                                           self.calibration.occlusion_OUT[Idx],
-                                           self.calibration.laser_position_OUT[Idx])
-
-            if self.CalibrationInformation.chkPositions.isChecked():
-                # POSITIONS
-                # ---------
-                self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_positions,
-                                                 x1=self.calibration.time_IN_SA[Idx],
-                                                 y1=self.calibration.angular_position_SA_IN[Idx],
-                                                 b1=Boundin,
-                                                 x2=self.calibration.time_OUT_SA[Idx],
-                                                 y2=self.calibration.angular_position_SA_OUT[Idx],
-                                                 b2=Boundout)
-
-            if self.CalibrationInformation.chkSpeeds.isChecked():
-                # SPEEDS
-                # ------
-                self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_speeds,
-                                                 x1=self.calibration.time_IN_SA[Idx],
-                                                 y1=1e3*self.calibration.speed_IN_SA[Idx],
-                                                 b1=Boundin,
-                                                 x2=self.calibration.time_OUT_SA[Idx],
-                                                 y2=-1e3*self.calibration.speed_OUT_SA[Idx],
-                                                 b2=Boundout)
-
-            if self.CalibrationInformation.chkEccentricities.isChecked():
-                # ECCENTRICITIES
-                # --------------
-                Boundin = [np.min(self.calibration.occlusion_IN[Idx]), np.max(self.calibration.occlusion_IN[Idx])]
-                self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_eccentricities,
-                                                 x1=self.calibration.angular_position_SA_IN[Idx],
-                                                 y1=self.calibration.eccentricity_IN[Idx],
-                                                 b1=Boundin,
-                                                 x2=self.calibration.angular_position_SA_OUT[Idx],
-                                                 y2=-self.calibration.eccentricity_OUT[Idx],
-                                                 b2=Boundin)
-
-            if self.CalibrationInformation.chkFPC.isChecked():
-
-                # FIXED POINT CALIBRATION (FPC)
-                # ----------------------------
-                self.actualise_single_QTab(self.TabWidgetPlotting.tab_fpc,
-                                                x1 = self.calibration.time_IN_SA[Idx],
-                                                y1 = self.calibration.angular_position_SA_IN[Idx],
-                                                x2 = self.calibration.time_OUT_SA[Idx],
-                                                y2 = self.calibration.angular_position_SA_OUT[Idx],
-                                                x1_2 = self.calibration.time_IN_SB[Idx],
-                                                y1_2 = self.calibration.angular_position_SB_IN[Idx],
-                                                x2_2 = self.calibration.time_OUT_SB[Idx],
-                                                y2_2 = self.calibration.angular_position_SB_OUT[Idx],
-                                                t1 = self.calibration.occlusion_IN[Idx],
-                                                t2 = self.calibration.occlusion_OUT[Idx])
-
-            if self.CalibrationInformation.chkRDS.isChecked():
-                # RELATIVE DISTANCE SIGNATURE PLOT (RDS)
-                # ----------------------------
-                self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
-                                           self.calibration.time_IN_SA[Idx],
-                                           self.calibration.time_OUT_SA[Idx],
-                                           self.calibration.time_IN_SB[Idx],
-                                           self.calibration.time_OUT_SB[Idx])
+            # Generate CSV File to store calibration coefficients
+            Param = self.TabWidgetPlotting.tab_calibration_IN.CalibCoeff
+            with open(self.actual_PROCESSED_folder + '/Coeff.csv','w') as csvfile:
+                fieldnames = ['Scan','Co','Fl','Alpha']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerow({'Scan': 'IN', 'Co': Param[0][1], 'Fl': Param[0][2], 'Alpha': Param[0][0]})
+                writer.writerow({'Scan': 'OUT','Co': Param[1][1], 'Fl': Param[1][2], 'Alpha': Param[1][0]})
 
 
-            self.FileDescriptionTable.table.setHorizontalHeaderLabels(['Valid',
-                                                                       'Laser pos\n [mm]',
-                                                                       'Scan\nnumber', 'occlusion\nIN [rad]',
-                                                                       'occlusion\nOUT [rad]'])
+        if self.CalibrationInformation.chkPositions.isChecked():
+            # POSITIONS
+            # ---------
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_positions,
+                                             x1=self.calibration.time_IN_SA[Idx],
+                                             y1=self.calibration.angular_position_SA_IN[Idx],
+                                             b1=Boundin,
+                                             x2=self.calibration.time_OUT_SA[Idx],
+                                             y2=self.calibration.angular_position_SA_OUT[Idx],
+                                             b2=Boundout)
 
-            self.TabWidgetPlotting.setCurrentWidget(self.TabWidgetPlotting.tab_calibration_IN)
+        if self.CalibrationInformation.chkSpeeds.isChecked():
+            # SPEEDS
+            # ------
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_speeds,
+                                             x1=self.calibration.time_IN_SA[Idx],
+                                             y1=1e3*self.calibration.speed_IN_SA[Idx],
+                                             b1=Boundin,
+                                             x2=self.calibration.time_OUT_SA[Idx],
+                                             y2=-1e3*self.calibration.speed_OUT_SA[Idx],
+                                             b2=Boundout)
 
-            self.TabWidgetPlotting.tab_OPS_processing.reset()
+        if self.CalibrationInformation.chkEccentricities.isChecked():
+            # ECCENTRICITIES
+            # --------------
+            Boundin = [np.min(self.calibration.occlusion_IN[Idx]), np.max(self.calibration.occlusion_IN[Idx])]
+            self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_eccentricities,
+                                             x1=self.calibration.angular_position_SA_IN[Idx],
+                                             y1=self.calibration.eccentricity_IN[Idx],
+                                             b1=Boundin,
+                                             x2=self.calibration.angular_position_SA_OUT[Idx],
+                                             y2=-self.calibration.eccentricity_OUT[Idx],
+                                             b2=Boundin)
 
-            self.parent.LogDialog.add('PROCESSED data imported', 'info')
+        if self.CalibrationInformation.chkFPC.isChecked():
+
+            # FIXED POINT CALIBRATION (FPC)
+            # ----------------------------
+            self.actualise_single_QTab(self.TabWidgetPlotting.tab_fpc,
+                                            x1 = self.calibration.time_IN_SA[Idx],
+                                            y1 = self.calibration.angular_position_SA_IN[Idx],
+                                            x2 = self.calibration.time_OUT_SA[Idx],
+                                            y2 = self.calibration.angular_position_SA_OUT[Idx],
+                                            x1_2 = self.calibration.time_IN_SB[Idx],
+                                            y1_2 = self.calibration.angular_position_SB_IN[Idx],
+                                            x2_2 = self.calibration.time_OUT_SB[Idx],
+                                            y2_2 = self.calibration.angular_position_SB_OUT[Idx],
+                                            t1 = self.calibration.occlusion_IN[Idx],
+                                            t2 = self.calibration.occlusion_OUT[Idx])
+
+        if self.CalibrationInformation.chkRDS.isChecked():
+            # RELATIVE DISTANCE SIGNATURE PLOT (RDS)
+            # ----------------------------
+            self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
+                                       self.calibration.time_IN_SA[Idx],
+                                       self.calibration.time_OUT_SA[Idx],
+                                       self.calibration.time_IN_SB[Idx],
+                                       self.calibration.time_OUT_SB[Idx])
+
+
+        self.FileDescriptionTable.table.setHorizontalHeaderLabels(['Valid',
+                                                                   'Laser pos\n [mm]',
+                                                                   'Scan\nnumber', 'occlusion\nIN [rad]',
+                                                                   'occlusion\nOUT [rad]'])
+
+        self.TabWidgetPlotting.setCurrentWidget(self.TabWidgetPlotting.tab_calibration_IN)
+
+        self.TabWidgetPlotting.tab_OPS_processing.reset()
+
+        self.parent.LogDialog.add('PROCESSED data imported', 'info')
 
     def actualise_not_folder_dependant_plot(self):
         SelectedIndex = np.count_nonzero(self.calibration.data_valid[0:self.actual_index])
@@ -606,11 +613,6 @@ class QProcessedAnalysisTab(QWidget):
 
         folder = self.actual_PROCESSED_folder
 
-        parameter_file = utils.resource_path('data/parameters.cfg')
-        config = configparser.RawConfigParser()
-        config.read(parameter_file)
-        tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
-
         laser_position = self.calibration.laser_position_IN
         scan_number = self.calibration.scan_number_IN
         occlusion_IN = self.calibration.occlusion_IN
@@ -646,7 +648,7 @@ class QProcessedAnalysisTab(QWidget):
 
             self.FileDescriptionTable.table.setItem(i, 0, ChkItem)
             #self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str(laser_position[i])))
-            self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str( - laser_position[i] + tank_center )))
+            self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str(laser_position[i])))
             self.FileDescriptionTable.table.setItem(i, 2, QTableWidgetItem(str(scan_number[i])))
             self.FileDescriptionTable.table.setItem(i, 3, QTableWidgetItem(str(occlusion_IN[i])))
             self.FileDescriptionTable.table.setItem(i, 4, QTableWidgetItem(str(occlusion_OUT[i])))
