@@ -101,8 +101,8 @@ class ecc_plot(mplCanvas):
 
         ax2 = self.fig.add_subplot(2, 1, 2)
         ax2.set_title('Position error and time compensation - OUT', loc='left')
-        ax2.set_xlabel('Angular position (rad)')
-        ax2.set_ylabel('Position error (rad)')
+        ax2.set_xlabel('Angular position [rad]')
+        ax2.set_ylabel('Position error [rad]')
         ax2.plot(self.positions_OUT, self.time_OUT)
         prairie.style(ax2)
 

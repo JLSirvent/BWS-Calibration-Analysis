@@ -126,17 +126,16 @@ class QProcessedAnalysisTab(QWidget):
         self.CalibrationInformation.testparam_button.clicked.connect(self.test_tdms)
 
         self.CalibrationInformation.processcalibration_button.setEnabled(False)
-        self.CalibrationInformation.processcalibration_button.clicked.connect(self.onStart)
+        self.CalibrationInformation.processcalibration_button.clicked.connect(self.onStartV2)
 
         self.CalibrationInformation.import_button.setEnabled(False)
         self.CalibrationInformation.import_button.clicked.connect(self.actualise_all)
 
-        self.CalibrationInformation.processed_data_selection.label_select_folder.selectionChanged.connect(self.set_PROCESSED_folder)
-        self.CalibrationInformation.tdms_data_selection.label_select_folder.selectionChanged.connect(self.set_TDMS_folder)
-        self.CalibrationInformation.processed_data_selection.button_select_folder.pressed.connect(self.actualise_all)
+        #self.CalibrationInformation.processed_data_selection.label_select_folder.selectionChanged.connect(self.set_PROCESSED_folder)
+        #self.CalibrationInformation.tdms_data_selection.label_select_folder.selectionChanged.connect(self.set_TDMS_folder)
+        #self.CalibrationInformation.processed_data_selection.button_select_folder.pressed.connect(self.actualise_all)
 
         self.FileDescriptionTable.table.itemClicked.connect(self.ClickOnItem)
-
 
         self.mainLayout = QVBoxLayout()
 
@@ -169,7 +168,7 @@ class QProcessedAnalysisTab(QWidget):
         self.resize(100, 50)
 
 
-    def onStart(self):
+    def onStartV2(self):
 
         if self.CalibrationInformation.import_button.isEnabled():
             choice = Warning_Dialog().user_choice
@@ -198,32 +197,22 @@ class QProcessedAnalysisTab(QWidget):
 
                 self.done = False
 
-                self.myLongTask = utils.CreateRawDataFolder(self.actual_TDMS_folder, self.actual_destination_folder, self)
-                self.myLongTask.notifyProgress.connect(self.onProgress)
-                self.myLongTask.notifyState.connect(self.onState)
-                self.myLongTask.notifyFile.connect(self.onFile)
+                NewFolderName = self.actual_destination_folder + '/' + self.actual_TDMS_folder.split('/')[-1] + ' PROCESSED'
+
+                # Creation of Folder Structure
+                if os.path.exists(NewFolderName):
+                    shutil.rmtree(NewFolderName)
+                    time.sleep(3)
+                os.makedirs(NewFolderName)
+
                 self.CalibrationInformation.processcalibration_button.setEnabled(False)
+                self.parent.LogDialog.add('Processing Calibration : ' + self.actual_TDMS_folder.split('/')[-1] + '...', 'info')
+                self.myLongTask = ops.ProcessRawDataV2(self.actual_TDMS_folder,NewFolderName, self)
+                self.myLongTask.notifyProgress.connect(self.onProgress)
+                self.myLongTask.notifyState.connect(self.onStateV2)
+                self.myLongTask.notifyFile.connect(self.onFile)
                 self.myLongTask.start()
 
-                self.parent.LogDialog.add('Starting ' + self.actual_TDMS_folder + ' conversion', 'info')
-
-    def RAW_IN(self):
-
-        self.myLongTask = ops.ProcessRawData(self.actual_destination_folder + '/RAW_DATA/RAW_IN', self.actual_destination_folder)
-        self.myLongTask.notifyProgress.connect(self.onProgress)
-        self.myLongTask.notifyState.connect(self.onState)
-        self.myLongTask.notifyFile.connect(self.onFile)
-        self.CalibrationInformation.processcalibration_button.setEnabled(False)
-        self.myLongTask.start()
-
-    def RAW_OUT(self):
-
-        self.myLongTask = ops.ProcessRawData(self.actual_destination_folder + '/RAW_DATA/RAW_OUT', self.actual_destination_folder)
-        self.myLongTask.notifyProgress.connect(self.onProgress)
-        self.myLongTask.notifyState.connect(self.onState)
-        self.myLongTask.notifyFile.connect(self.onFile)
-        self.CalibrationInformation.processcalibration_button.setEnabled(False)
-        self.myLongTask.start()
 
     def onProgress(self, i):
         self.CalibrationInformation.progressBar.setValue(i)
@@ -231,42 +220,45 @@ class QProcessedAnalysisTab(QWidget):
             #self.Process.setDisabled(False)
             self.CalibrationInformation.progressBar.reset()
 
-    def onState(self, state):
-        print(state)
+    def onStateV2(self, state):
         self.CalibrationInformation.label_progression.setText(state)
-        if state == 'done convert':
+        if state == 'Calibration Processed!':
             self.CalibrationInformation.processcalibration_button.setEnabled(True)
-            self.CalibrationInformation.progressBar.reset()
-            self.RAW_IN()
-
-        elif state == 'done IN':
-            self.CalibrationInformation.processcalibration_button.setEnabled(True)
-            self.CalibrationInformation.progressBar.reset()
-            self.RAW_OUT()
-
-        elif state == 'done OUT':
-            self.CalibrationInformation.processcalibration_button.setEnabled(True)
-            utils.create_processed_data_folder(self.actual_TDMS_folder, destination_folder=self.actual_destination_folder, force_overwrite='y')
-            self.CalibrationInformation.progressBar.reset()
-            # When finished, load current calibration results
+            self.parent.LogDialog.add('Processing Finished!', 'info')
+            self.parent.LogDialog.add('Importing Results...', 'info')
             self.actualise_all()
 
     def onFile(self, file):
-        self.CalibrationInformation.label_file.setText(file.split('/')[-1])
+        self.CalibrationInformation.label_file.setText(file.split('\\')[-1])
 
     def show_parameters_window(self):
         os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
+
+    def test_tdms_v2(self):
+
+        test = utils.tdms_list_from_folder_sorted(self.actual_TDMS_folder)
+        filepath = test[self.actual_index]
+        print(test[self.actual_index])
+        data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(filepath)
+
+        # We use a parameter file
+        parameter_file = utils.resource_path('data/parameters.cfg')
+        config = configparser.RawConfigParser()
+        config.read(parameter_file)
+        # --
+
+        # Process Positions
+        Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), time__in[0], showplot=0, filename=" ", INOUT='IN')
 
     def test_tdms(self):
 
         test = utils.tdms_list_from_folder_sorted(self.actual_TDMS_folder)
         filepath = test[self.actual_index]
 
-        print(self.actual_index)
         print(test[self.actual_index])
+        self.parent.LogDialog.add('OPENING : ' + filepath , 'info')
 
         data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(filepath)
-
 
         if type(data__s_a_in) is not int:
 
@@ -343,7 +335,6 @@ class QProcessedAnalysisTab(QWidget):
                                              x2_2= [0, 0],
                                              y2_2= [0, 0])
 
-            self.parent.LogDialog.add(filepath + ' processed', 'info')
             self.TabWidgetPlotting.setCurrentWidget(self.TabWidgetPlotting.tab_OPS_processing)
         else:
             if data__s_a_in == -1:
@@ -449,12 +440,11 @@ class QProcessedAnalysisTab(QWidget):
 
     def actualise_all(self):
 
+        self.parent.LogDialog.add('IMPORTING data...', 'info')
+
         self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
-
         self.CalibrationInformation.set_PROCESSED_folder_V2(self.calibration)
-
         self.tdms_file_list = utils.tdms_list_from_folder(self.actual_TDMS_folder)
-
         self.actualise_file_table()
 
         # OUT POSITIONS CORRECTION:
@@ -482,6 +472,8 @@ class QProcessedAnalysisTab(QWidget):
         print('fine index found2')
 
         if self.CalibrationInformation.chkCalibrations.isChecked():
+            self.parent.LogDialog.add('   Plotting Calibration...', 'info')
+
             # CALIBRATION IN-OUT
             # ------------------
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
@@ -499,8 +491,12 @@ class QProcessedAnalysisTab(QWidget):
                 writer.writerow({'Scan': 'IN', 'Co': Param[0][1], 'Fl': Param[0][2], 'Alpha': Param[0][0]})
                 writer.writerow({'Scan': 'OUT','Co': Param[1][1], 'Fl': Param[1][2], 'Alpha': Param[1][0]})
 
+            self.TabWidgetPlotting.tab_calibration_IN.plot.fig.savefig(self.actual_PROCESSED_folder + '/Calibration.png')
+
 
         if self.CalibrationInformation.chkPositions.isChecked():
+            self.parent.LogDialog.add('   Plotting Positions...', 'info')
+
             # POSITIONS
             # ---------
             self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_positions,
@@ -512,6 +508,8 @@ class QProcessedAnalysisTab(QWidget):
                                              b2=Boundout)
 
         if self.CalibrationInformation.chkSpeeds.isChecked():
+            self.parent.LogDialog.add('   Plotting Speeds...', 'info')
+
             # SPEEDS
             # ------
             self.actualise_multiple_Qtab(self.TabWidgetPlotting.tab_speeds,
@@ -522,7 +520,11 @@ class QProcessedAnalysisTab(QWidget):
                                              y2=-1e3*self.calibration.speed_OUT_SA[Idx],
                                              b2=Boundout)
 
+            self.TabWidgetPlotting.tab_speeds.plot.fig.savefig(self.actual_PROCESSED_folder + '/Speed.png')
+
         if self.CalibrationInformation.chkEccentricities.isChecked():
+            self.parent.LogDialog.add('   Plotting Eccentricities...', 'info')
+
             # ECCENTRICITIES
             # --------------
             Boundin = [np.min(self.calibration.occlusion_IN[Idx]), np.max(self.calibration.occlusion_IN[Idx])]
@@ -535,6 +537,7 @@ class QProcessedAnalysisTab(QWidget):
                                              b2=Boundin)
 
         if self.CalibrationInformation.chkFPC.isChecked():
+            self.parent.LogDialog.add('   Plotting FPC...', 'info')
 
             # FIXED POINT CALIBRATION (FPC)
             # ----------------------------
@@ -551,6 +554,7 @@ class QProcessedAnalysisTab(QWidget):
                                             t2 = self.calibration.occlusion_OUT[Idx])
 
         if self.CalibrationInformation.chkRDS.isChecked():
+            self.parent.LogDialog.add('   Plotting FPC...', 'info')
             # RELATIVE DISTANCE SIGNATURE PLOT (RDS)
             # ----------------------------
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
@@ -569,13 +573,12 @@ class QProcessedAnalysisTab(QWidget):
 
         self.TabWidgetPlotting.tab_OPS_processing.reset()
 
-        self.parent.LogDialog.add('PROCESSED data imported', 'info')
+        self.parent.LogDialog.add('ALL DATA IMPORTED', 'info')
 
     def actualise_not_folder_dependant_plot(self):
         SelectedIndex = np.count_nonzero(self.calibration.data_valid[0:self.actual_index])
         self.TabWidgetPlotting.tab_calibration_IN.set_focus(SelectedIndex)
         #self.TabWidgetPlotting.tab_calibration_OUT.set_focus(SelectedIndex)
-
 
     def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2):
         QTab.set_x_IN(x1)

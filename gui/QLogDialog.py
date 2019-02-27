@@ -68,3 +68,4 @@ class QLogDialog(QTabWidget):
             color = 'rgb(219, 157, 60)'
 
         self.log.append('<span style="color:' + color + '">' + prefix + ': ' + text + '</span>')
+        self.repaint()

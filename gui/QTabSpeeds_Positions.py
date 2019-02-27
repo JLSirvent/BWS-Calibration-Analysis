@@ -142,11 +142,20 @@ class plot(mplCanvas):
         super(plot, self).__init__(parent, width, height, dpi)
 
     def compute_initial_figure(self):
-        try:
-            self.fig.clear()
+        self.fig.clear()
+        ax1 = self.fig.add_subplot(121)
+        ax1.set_ylabel(self.ylabel)
+        ax1.set_xlabel(self.xlabel)
+        ax1.set_title(self.title + 'IN - Sensor A', loc='left')
 
-            ax1 = self.fig.add_subplot(121)
-            ax2 = self.fig.add_subplot(122,sharey=ax1)
+        ax2 = self.fig.add_subplot(122, sharey=ax1)
+        ax2.set_ylabel(self.ylabel)
+        ax2.set_xlabel(self.xlabel)
+        ax2.set_title(self.title + 'OUT - Sensor A', loc='left')
+
+        self.fig.tight_layout()
+
+        try:
 
             for i in range(1, 3):
                 if i == 1:
@@ -161,6 +170,8 @@ class plot(mplCanvas):
                     boundy = self.bound_out
                     times = self.times_out
                     speeds = self.speeds_out
+
+                ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
 
                 off = 0
                 values = range(len(speeds) + 1)
@@ -178,13 +189,9 @@ class plot(mplCanvas):
                     ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
                     cnt = cnt + 1
 
-                ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
-                ax_all.set_title(self.title + title + ' - Sensor A', loc='left')
-                ax_all.set_ylabel(self.ylabel)
-                ax_all.set_xlabel(self.xlabel)
+
                 prairie.style(ax_all)
 
-            self.fig.tight_layout()
 
         except:
             print("Error Speeds_Positions!")

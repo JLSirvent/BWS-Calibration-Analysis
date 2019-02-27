@@ -53,16 +53,16 @@ class QTabWidgetPlotting(QTabWidget):
 
 
         self.tab_position = QTab('Disk position',
-                                 'Time (s)',
-                                 'Angular position (rad)')
+                                 'Time [ms]',
+                                 'Angular position [rad]')
 
         self.tab_speed = QTab('Disk speed',
-                              'Time (s)',
-                              'Angular speed (rad/s)')
+                              'Time [ms]',
+                              'Angular speed [rad/s]')
 
         self.tab_eccentricity = QTab('Position error and eccentricity compensation',
-                                     'Angular position (rad)',
-                                     'Position error (urad)')
+                                     'Angular position [rad]',
+                                     'Position error [urad]')
 
 
         self.tab_OPS_processing = QTabOPSProcessing()

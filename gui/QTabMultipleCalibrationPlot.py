@@ -28,6 +28,7 @@ from __future__ import unicode_literals
 
 import os
 import numpy as np
+import configparser
 import scipy.io as sio
 from scipy.optimize import curve_fit
 
@@ -115,6 +116,11 @@ class plot(mplCanvas):
         x_all1 = []
         y_all1 = []
 
+        parameter_file = utils.resource_path('data/parameters.cfg')
+        config = configparser.RawConfigParser()
+        config.read(parameter_file)
+        positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
+
         for folder in self.folders:
             self.calibration = Calibration.Calibration(folder)
             Idx = np.where(self.calibration.data_valid == 1)
@@ -130,6 +136,11 @@ class plot(mplCanvas):
                     x = self.calibration.occlusion_OUT[Idx]
                     y = self.calibration.laser_position_OUT[Idx]
                     Label = tmp+' OUT'
+
+                # Trim vectors for region of interest
+                Idx2 = np.where((y>=positions_for_fit[0])&(y<=positions_for_fit[1]))
+                x = x[Idx2]
+                y = y[Idx2]
 
                 if self.globalresiduals == 1:
                     x_all=np.concatenate((x_all,x),axis=0)

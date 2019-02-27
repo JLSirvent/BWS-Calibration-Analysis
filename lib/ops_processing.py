@@ -34,11 +34,14 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from scipy.stats import norm
+from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 
 import lib.utils as utils
 from lib import diagnostic_tools as mplt
+from lib import detect_peaks
+
 
 def process_position(data, parameter_file, StartTime, showplot=False, filename=None, return_processing=False,
                      camelback_threshold_on=True, INOUT = 'IN'):
@@ -48,7 +51,6 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     """
 
     # Recuperation of processing parameters:
-
     config = configparser.RawConfigParser()
     config.read(parameter_file)
     sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
@@ -75,23 +77,48 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
 
     data = utils.butter_lowpass_filter(data, OPS_processing_filter_freq, sampling_frequency, order=5)
 
+    #start = time.time()
+    #end = time.time()
+    #print('Filter T: ')
+    #print(end - start)
+
     data = data - min_data
     data = data / max_data
 
-    maxtab, mintab = utils.peakdet(data, prominence)
+    # start = time.time()
 
-    false = np.where(mintab[:, 1] > np.mean(maxtab[:, 1]))
-    mintab = np.delete(mintab, false, 0)
+    # *** This is the part that takes most of the time!
+    # Method A:
+    # ---------
+    # maxtab, mintab = utils.peakdet(data, prominence)
+    # false = np.where(mintab[:, 1] > np.mean(maxtab[:, 1]))
+    # mintab = np.delete(mintab, false, 0)
+    #
+    # locs_up = np.array(maxtab)[:, 0]
+    # pck_up = np.array(maxtab)[:, 1]
+    #
+    # locs_dwn = np.array(mintab)[:, 0]
+    # pck_dwn = np.array(mintab)[:, 1]
 
-    locs_up = np.array(maxtab)[:, 0]
-    pck_up = np.array(maxtab)[:, 1]
 
-    locs_dwn = np.array(mintab)[:, 0]
-    pck_dwn = np.array(mintab)[:, 1]
+    # Method B: Seems Faster
+    # ----------------------
+    locs_up, _ = find_peaks(data, prominence = prominence)
+    locs_dwn, _ = find_peaks(-data + 1, prominence = prominence)
+    pck_up = data[locs_up]
+    pck_dwn = data[locs_dwn]
+
+    todelete = np.where(pck_dwn>np.mean(pck_up))
+    locs_dwn = np.delete(locs_dwn,todelete,0)
+    pck_dwn = np.delete(pck_dwn,todelete,0)
+
+    # end = time.time()
+    # print('Filter T: ')
+    # print(end - start)
 
     LengthMin = np.minimum(pck_up.size, pck_dwn.size)
 
-    # Crosing psotion evaluation
+    # Crosing position evaluation
     Crosingpos = np.ones((2, LengthMin))
     Crosingpos[1][:] = np.arange(1, LengthMin + 1)
 
@@ -143,6 +170,7 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     # Un-corrected position and time
     Data_Time = Crosingpos[0][:] * 1 / sampling_frequency
     Data_Pos = Crosingpos[1][:] * AngularIncrement
+
     # Relative-distances method for slit-loss compensation:
     Distances = np.diff(Crosingpos[0][0:Crosingpos.size - 1])
 
@@ -231,6 +259,7 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     # # plt.plot(1e3*StartTime+1e3*IndexRef1*1/sampling_frequency + StartTime, data[IndexRef1], 'x')
     # #        plt.plot(1e3*StartTime+1e3*np.arange(1,Distances.size)*1/sampling_frequency + StartTime, RelDistr, '.')
 
+
     if return_processing is True:
         if INOUT == 'OUT':
             return [1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * np.arange(0, data.size) * 1 / sampling_frequency, data,
@@ -250,187 +279,6 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
                     Data]
     else:
         return Data
-
-def process_position_old(data, parameter_file, StartTime, showplot=False, filename=None, return_processing=False, camelback_threshold_on=True):
-    """
-    Processing of the angular position based on the raw data of the OPS
-    Credits : Jose Luis Sirvent (BE-BI-PM, CERN)
-    """
-
-    # Recuperation of processing parameters
-    config = configparser.RawConfigParser()
-    config.read(parameter_file)
-    SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
-    sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
-    rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))
-    prominence = eval(config.get('OPS processing parameters', 'prominence'))
-    camelback_threshold = eval(config.get('OPS processing parameters', 'camelback_threshold'))
-    OPS_processing_filter_freq = eval(config.get('OPS processing parameters', 'OPS_processing_filter_freq'))
-    REMP_reference_threshold = eval(config.get('OPS processing parameters', 'REMP_reference_threshold'))
-    References_Timming = eval(config.get('OPS processing parameters','References_Timming'))
-
-    AngularIncrement = 2 * np.pi / SlitsperTurn
-
-    threshold_reference = np.amax(data) - camelback_threshold * np.mean(data)
-
-    if camelback_threshold_on is True:
-        data[np.where(data > threshold_reference)] = threshold_reference
-
-    max_data = np.amax(data)
-    min_data = np.amin(data)
-
-    data = utils.butter_lowpass_filter(data, OPS_processing_filter_freq, sampling_frequency, order=5)
-
-    data = data - min_data
-    data = data / max_data
-
-    maxtab, mintab = utils.peakdet(data, prominence)
-
-    false = np.where(mintab[:, 1] > np.mean(maxtab[:, 1]))
-    mintab = np.delete(mintab, false, 0)
-
-    locs_up = np.array(maxtab)[:, 0]
-    pck_up = np.array(maxtab)[:, 1]
-
-    locs_dwn = np.array(mintab)[:, 0]
-    pck_dwn = np.array(mintab)[:, 1]
-
-    LengthMin = np.minimum(pck_up.size, pck_dwn.size)
-
-    # ==========================================================================
-    # Position processing based on crossing points: Rising edges only
-    # ==========================================================================
-    # Crosing psotion evaluation
-    Crosingpos = np.ones((2, LengthMin))
-    Crosingpos[1][:] = np.arange(1, LengthMin + 1)
-    IndexDwn = 0
-    IndexUp = 0
-    A = []
-
-    # Position calculation loop:
-    for i in range(0, LengthMin - 1):
-
-        # Ensure crossing point in rising edge (locs_dwn < locs_up)
-        while locs_dwn[IndexDwn] >= locs_up[IndexUp]:
-            IndexUp += 1
-
-        while locs_dwn[IndexDwn + 1] < locs_up[IndexUp]:
-            IndexDwn += 1
-
-        # Calculate thresshold for current window: Mean point
-        Threshold = (data[int(locs_dwn[IndexDwn])] + data[int(locs_up[IndexUp])]) / 2
-        # Find time on crossing point:
-        b = int(locs_dwn[IndexDwn]) + np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] >= Threshold)[0][0]
-        idx_n = np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] < Threshold)[0]
-        idx_n = idx_n[::-1][0]
-        a = int(locs_dwn[IndexDwn]) + idx_n
-
-        Crosingpos[0, i] = (Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
-
-        # if showplot is True or showplot is 1:
-        A = np.append(A, Threshold)
-
-        # Move to next window:
-        IndexDwn = IndexDwn + 1
-        IndexUp = IndexUp + 1
-
-    # ==========================================================================
-    # Position loss compensation
-    # ==========================================================================
-    # Un-corrected position and time
-    Data_Time = Crosingpos[0][:] * 1 / sampling_frequency
-    Data_Pos = Crosingpos[1][:] * AngularIncrement
-    # Relative-distances method for slit-loss compensation:
-    Distances = np.diff(Crosingpos[0][0:Crosingpos.size - 1])
-    RelDistr = np.divide(Distances[1:Distances.size], Distances[0:Distances.size - 1])
-    # Search of compensation points:
-    PointsCompensation = np.where(RelDistr >= rdcp[0])[0]
-
-    for b in np.arange(0, PointsCompensation.size):
-
-        if RelDistr[PointsCompensation[b]] >= rdcp[1]:
-            # These are the references
-            Data_Pos[(PointsCompensation[b] + 2):Data_Pos.size] = Data_Pos[(
-                PointsCompensation[b] + 2):Data_Pos.size] + 2 * AngularIncrement
-
-        elif RelDistr[PointsCompensation[b]] >= rdcp[0] and RelDistr[PointsCompensation[b]] <= rdcp[1]:
-            # These are 1 slit losses
-            Data_Pos[(PointsCompensation[b] + 2):Data_Pos.size] = Data_Pos[(
-                PointsCompensation[b] + 2):Data_Pos.size] + 1 * AngularIncrement
-
-    # ==========================================================================
-    # Alignment to First reference and Storage
-    # ==========================================================================
-
-    if StartTime > References_Timming[0]/1000 :
-        Rtiming = References_Timming[1]
-    else:
-        Rtiming = References_Timming[0]
-
-    Offset = np.where(Data_Time[0:Data_Time.size - 1] + StartTime > (Rtiming/1000))[0][0]
-    #print(References_Timming[0] / 1000)
-    #print(Data_Time[Offset])
-    #Offset = 100
-
-    _IndexRef1 = Offset + np.where(RelDistr[Offset:LengthMin - Offset] > rdcp[1])[0]
-    IndexRef1 = _IndexRef1[0]
-
-    #if len(np.where(A[_IndexRef1 + 1] > REMP_reference_threshold)[0]) > 1:
-    #    IndexRef1 = _IndexRef1[np.where(A[_IndexRef1 + 1] > 0.35)][0]
-
-    # else:
-    #     try:
-    #         IndexRef1 = _IndexRef1[0]
-    #         print(filename)
-    #     except:
-    # IndexRef1 = 0
-
-    #else:
-    #    IndexRef1 = 0
-    #    print(filename)
-    #    print(A[_IndexRef1], A[_IndexRef1 + 1])
-
-
-    #print(Data_Time[IndexRef1] + StartTime)
-
-    Data_Pos = Data_Pos - Data_Pos[IndexRef1]
-    Data = np.ndarray((2, Data_Pos.size - 1))
-    Data[0] = Data_Time[0:Data_Time.size - 1] + StartTime
-    Data[1] = Data_Pos[0:Data_Pos.size - 1]
-
-
-    # ==========================================================================
-    # Plotting script
-    # ==========================================================================
-    if showplot is True or showplot is 1:
-        fig = plt.figure(figsize=(11,5))
-        ax1 = fig.add_subplot(111)
-        mplt.make_it_nice(ax1)
-        plt.axhspan(0, threshold_reference / max_data, color='black', alpha=0.1)
-        plt.axvspan(1e3 * StartTime + 1e3 * (data.size * 1 / 4) / sampling_frequency,
-                    1e3 * StartTime + 1e3 * (data.size * 3 / 4) / sampling_frequency, color='black', alpha=0.1)
-        plt.plot(1e3 * StartTime + 1e3 * np.arange(0, data.size) * 1 / sampling_frequency, data, linewidth=0.5)
-        plt.plot(1e3 * StartTime + 1e3 * locs_up * 1 / sampling_frequency, pck_up, '.', MarkerSize=1.5)
-        plt.plot(1e3 * StartTime + 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn, '.', MarkerSize=1.5)
-        plt.plot(1e3 * StartTime + 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A, linewidth=0.5)
-        ax1.set_title('Optical position sensor processing', loc='left')
-        ax1.set_xlabel('Time (um)')
-        ax1.set_ylabel('Normalized amplitude of signal (A.U.)')
-        plt.show(block=False)
-    # plt.plot(1e3*StartTime+1e3*IndexRef1*1/sampling_frequency + StartTime, data[IndexRef1], 'x')
-    #        plt.plot(1e3*StartTime+1e3*np.arange(1,Distances.size)*1/sampling_frequency + StartTime, RelDistr, '.')
-
-    if return_processing is True:
-        return [1e3 * StartTime + 1e3 * np.arange(0, data.size) * 1 / sampling_frequency, data,
-                1e3 * StartTime + 1e3 * locs_up * 1 / sampling_frequency, pck_up,
-                1e3 * StartTime + 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn,
-                1e3 * StartTime + 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A,
-                threshold_reference / max_data,
-                1e3 * StartTime + 1e3 * Crosingpos[0][IndexRef1] * (1 / sampling_frequency)]
-
-    else:
-        return Data
-
 
 def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_processing=False):
     """
@@ -592,8 +440,7 @@ def mean_fit_parameters(folders, folders_name=None):
                     dict(f_parameters_IN=[a_IN, b_IN, c_IN],
                          f_parameters_OUT=[a_OUT, b_OUT, c_OUT]))
 
-
-class ProcessRawData(QtCore.QThread):
+class ProcessRawDataV2(QtCore.QThread):
 
     notifyProgress = QtCore.pyqtSignal(int)
     notifyState = QtCore.pyqtSignal(str)
@@ -604,31 +451,37 @@ class ProcessRawData(QtCore.QThread):
         self.raw_data_folder = raw_data_folder
         self.destination_folder = destination_folder
         self.verbose = verbose
-        super(ProcessRawData, self).__init__(parent)
+        super(ProcessRawDataV2, self).__init__(parent)
 
     def run(self):
-
-        IN = self.raw_data_folder.find('_IN') != -1
-        OUT = self.raw_data_folder.find('_OUT') != -1
 
         # ==========================================================================
         # Variables and parameters definiton
         # ==========================================================================
-        angular_position_SA = []
-        angular_position_SB = []
-        data_PD = []
-        eccentricity = []
+        angular_position_SA_in = []
+        angular_position_SB_in = []
+        eccentricity_in = []
+        occlusion_position_in = []
+        oc_in = []
+        data_valid_in = []
+        speed_SA_in = []
+        speed_SB_in = []
+        time_SA_in = []
+        time_SB_in = []
+
+        angular_position_SA_out = []
+        angular_position_SB_out = []
+        eccentricity_out = []
+        occlusion_position_out = []
+        oc_out = []
+        data_valid_out = []
+        speed_SA_out = []
+        speed_SB_out = []
+        time_SA_out = []
+        time_SB_out = []
+
         laser_position = []
-        occlusion_position = []
-        oc = []
-        data_valid = []
-        original_time_SB = []
         scan_number = []
-        speed_SA = []
-        speed_SB = []
-        time_PD = []
-        time_SA = []
-        time_SB = []
 
         # We use a parameter file
         parameter_file = utils.resource_path('data/parameters.cfg')
@@ -638,132 +491,146 @@ class ProcessRawData(QtCore.QThread):
         process_occlusions = eval(config.get('OPS processing parameters','Process_Occlusions'))
         compensate_eccentricity = eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
         tank_centre = eval(config.get('Geometry','stages_position_at_tank_center'))
-        mat_files = utils.mat_list_from_folder_sorted(self.raw_data_folder)
 
-        mat = sio.loadmat(mat_files[0])
-
-        StartTime = mat['start_t'][0]
-        INorOUT = mat['INorOUT'][0]
-
-        if IN is True:
-            print('------- OPS Processing IN -------')
-            self.notifyState.emit('OPS Processing IN')
-            time.sleep(0.1)
-            scantype = 'IN'
-        elif OUT is True:
-            print('------- OPS Processing OUT -------')
-            self.notifyState.emit('OPS Processing OUT')
-            time.sleep(0.1)
-            scantype = 'OUT'
-
-        # ==========================================================================
-        # Raw data file names extraction
-        # ==========================================================================
-
-
+        print('------- Processing Calibration -------')
+        self.notifyState.emit('Processing Calibration...')
         # ==========================================================================
         # Main processing loop
         # ==========================================================================
 
         i = 0
 
-        for mat_file in tqdm(mat_files):
-            try:
-                if self.verbose is True:
-                    print(mat_file)
+        tdms_files = utils.tdms_list_from_folder_sorted(self.raw_data_folder)
 
-                self.notifyProgress.emit(int(i * 100 / len(mat_files)))
-                time.sleep(0.1)
+        for tdms_file in tqdm(tdms_files):
 
-                self.notifyFile.emit(mat_file)
-                time.sleep(0.1)
+            if self.verbose is True:
+                print(tdms_file)
 
-                # Laser position and scan number extraction from file name and saving in list
-                _laser_position, _scan_number = utils.find_scan_info(mat_file)
-                scan_number.append(int(_scan_number))
-                laser_position.append(float(_laser_position))
+            self.notifyProgress.emit(int(i * 100 / len(tdms_files)))
+            #time.sleep(0.1)
 
-                mat = sio.loadmat(mat_file)
+            self.notifyFile.emit(tdms_file)
+            #time.sleep(0.1)
 
-                _data_SA = mat['data_SA'][0]
-                _data_SB = mat['data_SB'][0]
-                _data_PD = mat['data_PD'][0]
+            # Laser position and scan number extraction from file name and saving in list
+            _laser_position, _scan_number = utils.find_scan_info(tdms_file)
+            scan_number.append(int(_scan_number))
+            laser_position.append(float(_laser_position))
 
-                Data_SA = process_position(_data_SA, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, filename=mat_file, INOUT= scantype)
-                Data_SB_O = process_position(_data_SB, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, filename=mat_file, INOUT= scantype)
-                Data_SB_R = utils.resample(Data_SB_O, Data_SA)
+            data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(tdms_file)
 
-                # Eccentricity from OPS processing and saving in list
-                _eccentricity = np.subtract(Data_SA[1], Data_SB_R[1]) / 2
+            for s in range(0,2):
+                try:
+                    if s == 0:
+                        _data_SA = data__s_a_in
+                        _data_SB = data__s_b_in
+                        _data_PD = data__p_d_in
+                        StartTime = time__in[0]
+                        scantype = 'IN'
+                        IN = True
+                    else:
+                        _data_SA = data__s_a_out
+                        _data_SB = data__s_b_out
+                        _data_PD = data__p_d_out
+                        StartTime = time__out[0]
+                        scantype = 'OUT'
+                        IN = False
 
-                # Decide Eccentricity compensation or not
-                # ---------------------------------------
-                if compensate_eccentricity is True:
-                    Data_SA[1] = np.subtract(Data_SA[1], _eccentricity)
-                    Data_SB    = [Data_SA[0], np.subtract(Data_SB_R[1], -_eccentricity)]
-                else:
-                    Data_SB = Data_SB_O
-                # ---------------------------------------
+                    Data_SA = process_position(_data_SA, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, INOUT= scantype)
+                    Data_SB_O = process_position(_data_SB, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, INOUT= scantype)
+                    Data_SB_R = utils.resample(Data_SB_O, Data_SA)
 
-                # OPS speed processing
-                _speed_SA = np.divide(np.diff(Data_SA[1]), np.diff(Data_SA[0]))
-                _speed_SB = np.divide(np.diff(Data_SB[1]), np.diff(Data_SB[0]))
+                    # Eccentricity from OPS processing and saving in list
+                    _eccentricity = np.subtract(Data_SA[1], Data_SB_R[1]) / 2
 
-                # Finding of occlusions and saving into a list
-                if process_occlusions is True:
+                    # Decide Eccentricity compensation or not
+                    # ---------------------------------------
+                    if compensate_eccentricity is True:
+                        Data_SA[1] = np.subtract(Data_SA[1], _eccentricity)
+                        Data_SB    = [Data_SA[0], np.subtract(Data_SB_R[1], -_eccentricity)]
+                    else:
+                        Data_SB = Data_SB_O
+                    # ---------------------------------------
 
-                    _time_PD = StartTime + np.arange(0, _data_PD.size) * 1 / sampling_frequency
-                    _time_PD = 1e3*_time_PD
+                    # OPS speed processing
+                    _speed_SA = np.divide(np.diff(Data_SA[1]), np.diff(Data_SA[0]))
+                    _speed_SB = np.divide(np.diff(Data_SB[1]), np.diff(Data_SB[0]))
 
-                    occlusions = find_occlusions(_data_PD, IN)
+                    # Finding of occlusions and saving into a list
+                    if process_occlusions is True:
 
-                    # -- New Method: Slightly faster --
-                    finterp = interp1d(Data_SA[0],Data_SA[1])
-                    occ1 = finterp(_time_PD[int(occlusions[0])])
-                    occ2 = finterp(_time_PD[int(occlusions[1])])
-                    # -----------------
+                        _time_PD = StartTime + np.arange(0, _data_PD.size) * 1 / sampling_frequency
+                        _time_PD = 1e3*_time_PD
 
-                    _occlusion = (occ2 - occ1) / 2 + occ1
-                    _oc = [occ1, occ2]
+                        occlusions = find_occlusions(_data_PD, IN)
 
-                else:
-                    _occlusion = StartTime + 0.02
+                        # -- New Method: Slightly faster --
+                        finterp = interp1d(Data_SA[0],Data_SA[1])
+                        occ1 = finterp(_time_PD[int(occlusions[0])])
+                        occ2 = finterp(_time_PD[int(occlusions[1])])
+                        # -----------------
 
-                eccentricity.append(_eccentricity)
-                angular_position_SA.append(Data_SA[1])
-                angular_position_SB.append(Data_SB[1])
-                time_SA.append(Data_SA[0])
-                time_SB.append(Data_SB[0])
-                speed_SA.append(_speed_SA)
-                speed_SB.append(_speed_SB)
-                occlusion_position.append(_occlusion)
-                oc.append(_oc)
-                data_valid.append(1)
+                        _occlusion = (occ2 - occ1) / 2 + occ1
+                        _oc = [occ1, occ2]
 
-            except:
+                    else:
+                        _occlusion = StartTime + 0.02
 
-                eccentricity.append([0,1])
-                angular_position_SA.append([0,1])
-                angular_position_SB.append([0,1])
-                time_SA.append([0,1])
-                time_SB.append([0,1])
-                speed_SA.append([0,1])
-                speed_SB.append([0,1])
-                occlusion_position.append(0)
-                oc.append([0,0])
-                data_valid.append(0)
+                    if s==0:
+                        eccentricity_in.append(_eccentricity)
+                        angular_position_SA_in.append(Data_SA[1])
+                        angular_position_SB_in.append(Data_SB[1])
+                        time_SA_in.append(Data_SA[0])
+                        time_SB_in.append(Data_SB[0])
+                        speed_SA_in.append(_speed_SA)
+                        speed_SB_in.append(_speed_SB)
+                        occlusion_position_in.append(_occlusion)
+                        oc_in.append(_oc)
+                        data_valid_in.append(1)
+                    else:
+                        eccentricity_out.append(_eccentricity)
+                        angular_position_SA_out.append(Data_SA[1])
+                        angular_position_SB_out.append(Data_SB[1])
+                        time_SA_out.append(Data_SA[0])
+                        time_SB_out.append(Data_SB[0])
+                        speed_SA_out.append(_speed_SA)
+                        speed_SB_out.append(_speed_SB)
+                        occlusion_position_out.append(_occlusion)
+                        oc_out.append(_oc)
+                        data_valid_out.append(1)
+                except:
 
-                self.notifyState.emit("Error in file:" + mat_file)
-                self.notifyProgress.emit("Error in file:" + mat_file)
-                print("Error in file:" + mat_file)
+                    if s == 0:
+                        eccentricity_in.append([0,1])
+                        angular_position_SA_in.append([0,1])
+                        angular_position_SB_in.append([0,1])
+                        time_SA_in.append([0,1])
+                        time_SB_in.append([0,1])
+                        speed_SA_in.append([0,1])
+                        speed_SB_in.append([0,1])
+                        occlusion_position_in.append(0)
+                        oc_in.append([0,0])
+                        data_valid_in.append(0)
+                        self.notifyState.emit("Error in file IN:" + tdms_file)
+                        self.notifyProgress.emit("Error in file IN:" + tdms_file)
+                        print("Error in file IN:" + tdms_file)
+                    else:
+                        eccentricity_out.append([0,1])
+                        angular_position_SA_out.append([0,1])
+                        angular_position_SB_out.append([0,1])
+                        time_SA_out.append([0,1])
+                        time_SB_out.append([0,1])
+                        speed_SA_out.append([0,1])
+                        speed_SB_out.append([0,1])
+                        occlusion_position_out.append(0)
+                        oc_out.append(_oc)
+                        data_valid_out.append(0)
+                        self.notifyState.emit("Error in file OUT:" + tdms_file)
+                        self.notifyProgress.emit("Error in file OUT:" + tdms_file)
+                        print("Error in file OUT:" + tdms_file)
 
             i += 1
-
-        if IN is True:
-            filename = 'PROCESSED_IN.mat'
-
-        elif OUT is True:
-            filename = 'PROCESSED_OUT.mat'
 
         # Before saving --> Normalize positions wrt tank center
         laser_position = tank_centre - np.asarray(laser_position)
@@ -771,29 +638,38 @@ class ProcessRawData(QtCore.QThread):
         # ==========================================================================
         # Matfile Saving
         # ==========================================================================
-        sio.savemat(self.destination_folder + '/' + filename,
-                    {'angular_position_SA': angular_position_SA,
-                     'angular_position_SB': angular_position_SB,
-                     'eccentricity': eccentricity,
+        sio.savemat(self.destination_folder + '/PROCESSED_IN.mat',
+                    {'angular_position_SA': angular_position_SA_in,
+                     'angular_position_SB': angular_position_SB_in,
+                     'eccentricity': eccentricity_in,
                      'laser_position': laser_position,
-                     'occlusion_position': occlusion_position,
-                     'oc': oc,
-                     'data_valid': data_valid,
+                     'occlusion_position': occlusion_position_in,
+                     'oc': oc_in,
+                     'data_valid': data_valid_in,
                      'scan_number': scan_number,
-                     'speed_SA': speed_SA,
-                     'speed_SB': speed_SB,
-                     'time_SA': time_SA,
-                     'time_SB': time_SB},
+                     'speed_SA': speed_SA_in,
+                     'speed_SB': speed_SB_in,
+                     'time_SA': time_SA_in,
+                     'time_SB': time_SB_in},
                     do_compression=True)
 
-        # log.log_file_saved(filename)
+        sio.savemat(self.destination_folder + '/PROCESSED_OUT.mat',
+                    {'angular_position_SA': angular_position_SA_out,
+                     'angular_position_SB': angular_position_SB_out,
+                     'eccentricity': eccentricity_out,
+                     'laser_position': laser_position,
+                     'occlusion_position': occlusion_position_out,
+                     'oc': oc_out,
+                     'data_valid': data_valid_out,
+                     'scan_number': scan_number,
+                     'speed_SA': speed_SA_out,
+                     'speed_SB': speed_SB_out,
+                     'time_SA': time_SA_out,
+                     'time_SB': time_SB_out},
+                    do_compression=True)
 
-        if IN is True:
-            self.notifyState.emit('done IN')
-            time.sleep(0.1)
-        elif OUT is True:
-            self.notifyState.emit('done OUT')
-            time.sleep(0.1)
+        self.notifyState.emit('Calibration Processed!')
+        #time.sleep(0.1)
 
 
 class ProcessCalibrationResults(QtCore.QThread):

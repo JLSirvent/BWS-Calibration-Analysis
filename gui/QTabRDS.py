@@ -139,15 +139,15 @@ class plot(mplCanvas):
                 distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
                 rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
 
-                xtimeA = 1e3 * time_SA[i][offset:time_SA[i].size - 2 - offset]
-                xtimeB = 1e3 * time_SB[i][offset:time_SB[i].size - 2 - offset]
+                xtimeA = time_SA[i][offset:time_SA[i].size - 2 - offset]
+                xtimeB = time_SB[i][offset:time_SB[i].size - 2 - offset]
 
                 ax1.plot(xtimeA,rel_distances_A, '.',
                          color=color_A)
                 ax1.plot(xtimeB,rel_distances_B, '.',
                          color=color_B)
 
-            ax1.set_xlabel('Time (ms)')
+            ax1.set_xlabel('Time [ms]')
             ax1.set_ylabel('Relative distance')
             ax1.set_title('RDS plot - IN', loc='left')
             ax1.set_ylim(0,5)
@@ -177,7 +177,7 @@ class plot(mplCanvas):
                 #ax2.plot(rel_distances_A, '.', color=color_A)
                 #ax2.plot(rel_distances_B, '.', color=color_B)
 
-            ax2.set_xlabel('Time (ms)')
+            ax2.set_xlabel('Time [ms]')
             ax2.set_ylabel('Relative distance')
             ax2.set_title('RDS plot - OUT', loc='left')
             ax2.set_ylim(0,5)

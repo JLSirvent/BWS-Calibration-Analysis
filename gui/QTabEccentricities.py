@@ -124,24 +124,39 @@ class plot(mplCanvas):
         super(plot, self).__init__(parent, width, height, dpi)
 
     def compute_initial_figure(self):
-        try:
-            self.fig.clear()
+        self.fig.clear()
 
-            ax1 = self.fig.add_subplot(221)
-            ax2 = self.fig.add_subplot(222,sharex=ax1)
-            ax3 = self.fig.add_subplot(223,sharex=ax1,sharey=ax1)
-            ax4 = self.fig.add_subplot(224,sharex=ax1,sharey=ax2)
+        ax1 = self.fig.add_subplot(221)
+        ax1.set_title('Eccentricity Error IN', loc='left')
+        ax1.set_xlabel('Angular position [rad]')
+        ax1.set_ylabel('Position error [mrad]')
+
+        ax2 = self.fig.add_subplot(222, sharex=ax1)
+        ax2.set_title('Error after compensation IN', loc='left')
+        ax2.set_xlabel('Angular position [rad]')
+        ax2.set_ylabel('Position error [mrad]')
+
+        ax3 = self.fig.add_subplot(223, sharex=ax1, sharey=ax1)
+        ax3.set_title('Eccentricity Error OUT', loc='left')
+        ax3.set_xlabel('Angular position [rad]')
+        ax3.set_ylabel('Position error [\u03BCrad]')
+
+        ax4 = self.fig.add_subplot(224, sharex=ax1, sharey=ax2)
+        ax4.set_title('Error after compensation OUT', loc='left')
+        ax4.set_xlabel('Angular position [rad]')
+        ax4.set_ylabel('Position error [\u03BCrad]')
+        self.fig.tight_layout()
+
+        try:
 
             for i in range(1, 3):
                 if i == 1:
-                    title = 'IN'
                     ax_all = ax1
                     ax_res = ax2
                     bound = self.bound_in
                     eccentricity = self.eccentricities_in
                     angular_position_SA = self.positions_in
                 else:
-                    title = 'OUT'
                     ax_all = ax3
                     ax_res = ax4
                     bound = self.bound_out
@@ -191,13 +206,10 @@ class plot(mplCanvas):
                     ax_all.plot(pos, 1e3 * ecc, linewidth=0.8, color=colorVal)
                     cnt = cnt + 1
                 #
-                ax_all.set_title('Eccentricity Error ' + title + ' - Sensor A', loc='left')
-                ax_all.set_xlabel('Angular position (rad)')
-                ax_all.set_ylabel('Position error (mrad)')
+
                 # #ax_all.legend(['Eccentricity global fit', 'Eccentricity profiles (' + str(eccentricity.size) + ')'])
                 prairie.style(ax_all)
                 #
-
 
                 cnt = 1
                 for ecc, pos in zip(eccentricity, angular_position_SA):
@@ -210,13 +222,10 @@ class plot(mplCanvas):
                     cnt = cnt + 1
 
                 ax_res.axvspan(bound[0], bound[1], color='red', alpha=0.1)
-                ax_res.set_title('Error after compensation', loc='left')
-                ax_res.set_xlabel('Angular position (rad)')
-                ax_res.set_ylabel('Position error (\u03BCrad)')
+
                 #ax_res.legend(['Residuals profiles (' + str(eccentricity.size) + ')'])
                 prairie.style(ax_res)
 
-            self.fig.tight_layout()
             #plt.tight_layout()
 
         except:
