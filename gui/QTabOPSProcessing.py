@@ -232,12 +232,13 @@ class plot(mplCanvas):
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 refY = P[1][np.where(P[0] > P[9])[0][0]]
-                ax1.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                #ax1.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                ax1.axvline(x=refX, color = 'red')
                 # ----
             except:
                 ax1.plot(1e3*self.t1[::Dec], self.x_IN_A[::Dec], linewidth=0.5)
                 print('Error processing Sensor A_IN')
-            ax1.legend(['OPS data', 'Maxs', 'Mins', 'Threshold'])
+            ax1.legend(['OPS data', 'Maxs', 'Mins', 'Threshold', 'Reference'])
             prairie.style(ax1)
 
             # SENSOR B IN
@@ -252,7 +253,8 @@ class plot(mplCanvas):
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 refY = P[1][np.where(P[0] > P[9])[0][0]]
-                ax2.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                #ax2.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                ax2.axvline(x=refX, color = 'red')
                 # ----
             except:
                 ax2.plot(1e3*self.t1, self.y_IN_A, linewidth=0.5)
@@ -271,7 +273,8 @@ class plot(mplCanvas):
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 refY = P[1][np.where(P[0] > P[9])[0][0]]
-                ax3.plot(refX, refY, '.', markersize=5, color = '#f93eed')
+                #ax3.plot(refX, refY, '.', markersize=5, color = '#f93eed')
+                ax3.axvline(x=refX, color = 'red')
                 # ----
             except:
                 ax3.plot(1e3*self.t2[::Dec], self.x_OUT_A[::Dec], linewidth=0.5)
@@ -290,7 +293,8 @@ class plot(mplCanvas):
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 refY = P[1][np.where(P[0] > P[9])[0][0]]
-                ax4.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                #ax4.plot( refX, refY, '.', markersize=5, color = '#f93eed')
+                ax4.axvline(x=refX, color = 'red')
                 # ----
             except:
                 ax4.plot(1e3*self.t2, self.y_OUT_A, linewidth=0.5)
@@ -303,8 +307,10 @@ class plot(mplCanvas):
             try:
                 occ_IN = ops.find_occlusions(self.pd1, IN=True, StartTime=self.t1[0], return_processing=True)
                 ax5.plot(1e3 * occ_IN[2][::Dec], occ_IN[3][::Dec], linewidth=1)
-                ax5.plot(1e3 * occ_IN[0], occ_IN[1], '.', markersize=3, color=black)
-                ax5.legend(['PD data', 'Detected occlusions'])
+                #ax5.plot(1e3 * occ_IN[0], occ_IN[1], '.', markersize=3, color=black)
+                ax5.axvline(x = 1e3*occ_IN[0][0], color = 'red')
+                ax5.axvline(x = 1e3*occ_IN[0][1], color = 'red')
+                ax5.legend(['PD data Raw', 'PD data Filt.' ,'Detected occlusions'])
             except:
                 print('Error detecting Occlusions IN')
             prairie.style(ax5)
@@ -315,7 +321,10 @@ class plot(mplCanvas):
             try:
                 occ_OUT = ops.find_occlusions(self.pd2, IN=False, StartTime=self.t2[0], return_processing=True)
                 ax6.plot(1e3 * occ_OUT[2][::Dec], occ_OUT[3][::Dec], linewidth=1)
-                ax6.plot(1e3 * occ_OUT[0], occ_OUT[1], '.', markersize=3, color=black)
+                #ax6.plot(1e3 * [0], occ_OUT[1], '.', markersize=3, color=black)
+                ax6.axvline(x = 1e3*occ_OUT[0][0], color = 'red')
+                ax6.axvline(x = 1e3*occ_OUT[0][1], color = 'red')
+
             except:
                 print('Error detecting Occlusions OUT')
             prairie.style(ax6)
