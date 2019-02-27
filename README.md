@@ -27,6 +27,8 @@ conda install -c conda-forge nptdms
 
 pip install configparser
 
+python -m pip install --upgrade scipy
+
 **Add Environment Variables:**
 
 path\Anaconda3

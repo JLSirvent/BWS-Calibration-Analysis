@@ -40,8 +40,6 @@ from scipy.interpolate import interp1d
 
 import lib.utils as utils
 from lib import diagnostic_tools as mplt
-from lib import detect_peaks
-
 
 def process_position(data, parameter_file, StartTime, showplot=False, filename=None, return_processing=False,
                      camelback_threshold_on=True, INOUT = 'IN'):
