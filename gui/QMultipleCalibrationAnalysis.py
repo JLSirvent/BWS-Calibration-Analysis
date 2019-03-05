@@ -73,12 +73,21 @@ class QMultipleCalibrationAnalysis(QWidget):
 
     def Update_Comparison(self):
 
-        if self.folder_selection.folder_selection.radio_independent.isChecked():
-            fittype = 0
-        else:
-            fittype = 1
+        fittype = [0,0,0]
 
-        self.PlotTab.set_folder(self.folder_selection.folder_selection.calibration_list, fittype)
+        if self.folder_selection.folder_selection.radio_polynomial.isChecked():
+            fittype[0] = 0
+        else:
+            fittype[0] = 1
+
+        fittype[1] = int(float(self.folder_selection.folder_selection.polynomial_order.text()))
+
+        if self.folder_selection.folder_selection.radio_independent.isChecked():
+            fittype[2] = 0
+        else:
+            fittype[2] = 1
+
+        self.PlotTab.set_folder(self.folder_selection.folder_selection.calibration_list, fittype[0], fittype[1], fittype[2])
 
 def main():
     app = QApplication(sys.argv)

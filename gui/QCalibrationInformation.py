@@ -27,8 +27,9 @@
 from __future__ import unicode_literals
 
 from lib import utils
-from gui import QFolderSelectionWidget
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar, QCheckBox
+from gui import QFolderSelectionWidget, QMultipleFolderSelection
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGroupBox, QLineEdit, QHBoxLayout, QComboBox, QPushButton, QProgressBar, QCheckBox, QRadioButton
+from PyQt5 import QtGui, QtCore
 
 import configparser
 import os
@@ -77,6 +78,24 @@ class QCalibrationInformation(QWidget):
         self.processed_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('PROCESSED folder:')
         self.tdms_data_selection = QFolderSelectionWidget.QFolderSelectionWidget('TDMS folder:', button=False)
         self.parameters_file_selection = QFolderSelectionWidget.QFolderSelectionWidget('Parameters file:', button=False)
+
+        self.radio_polynomial = QRadioButton('Polynomial')
+        self.radio_polynomial.setChecked(True)
+        self.polynomial_order_lbl = QLabel('Order:')
+        self.polynomial_order_lbl.setFixedWidth(35)
+
+        self.polynomial_order = QLineEdit('5')
+        self.polynomial_order.setFixedWidth(25)
+        self.radio_sinusoidal = QRadioButton('Sinusoidal')
+
+        self.radio_independent = QRadioButton('Individual Fits')
+        self.radio_global = QRadioButton('Global Fit')
+        self.radio_independent.setChecked(True)
+
+        self.ProcessButton = QPushButton('PROCESS analysis')
+        self.ProcessButton.setEnabled(False)
+
+        self.radio_polynomial.toggled.connect(self.typeSelection)
 
         self.import_options_box_layout = QVBoxLayout(self)
         self.import_options_box_layout.addStretch(1)
@@ -167,6 +186,10 @@ class QCalibrationInformation(QWidget):
         self.setFixedWidth(250)
 
         self.setLayout(main_layout)
+
+    def typeSelection(self):
+        self.polynomial_order.setEnabled(self.radio_polynomial.isChecked())
+        self.polynomial_order_lbl.setEnabled(self.radio_polynomial.isChecked())
 
     def set_PROCESSED_folder(self, file):
 

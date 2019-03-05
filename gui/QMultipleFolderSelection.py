@@ -34,7 +34,7 @@ from lib import utils
 from numpy import arange
 from PyQt5 import QtGui, QtCore
 from gui import QFolderSelectionWidget
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QTableWidget, QAbstractItemView, QHeaderView, QTableWidgetItem, QComboBox, QGroupBox, QListWidget, QRadioButton
+from PyQt5.QtWidgets import QWidget, QLineEdit, QLabel, QPushButton, QHBoxLayout, QVBoxLayout, QFileDialog, QApplication, QComboBox, QGroupBox, QListWidget, QRadioButton
 
 
 def cut(off, data):
@@ -136,20 +136,50 @@ class QFolderSelectionFrom(QWidget):
         self.calibration_list_widget = QListWidget()
         self.calibration_list_widget.resize(300,120)
 
+
+        self.radio_polynomial = QRadioButton('Polynomial')
+        self.radio_polynomial.setChecked(True)
+        self.polynomial_order_lbl = QLabel('Order:')
+        self.polynomial_order_lbl.setFixedWidth(35)
+
+        self.polynomial_order = QLineEdit('5')
+        self.polynomial_order.setFixedWidth(25)
+        self.radio_sinusoidal = QRadioButton('Sinusoidal')
+
         self.radio_independent=QRadioButton('Individual Fits')
         self.radio_global = QRadioButton('Global Fit')
         self.radio_independent.setChecked(True)
 
         self.ProcessButton = QPushButton('PROCESS analysis')
         self.ProcessButton.setEnabled(False)
+
+        self.radio_polynomial.toggled.connect(self.typeSelection)
         # ---------------------------------------------
 
-        self.fit_type_box = QGroupBox('Fit Type')
-        self.fit_type_box_layout = QHBoxLayout(self)
-        #self.fit_type_box_layout.addStretch(1)
-        self.fit_type_box_layout.addWidget(self.radio_independent)
-        self.fit_type_box_layout.addWidget(self.radio_global)
-        self.fit_type_box.setLayout(self.fit_type_box_layout)
+        self.fit_type2_box = QGroupBox('Behavior')
+        self.fit_type2_box_layout = QHBoxLayout(self)
+        self.fit_type2_box_layout.addWidget(self.radio_independent)
+        self.fit_type2_box_layout.addWidget(self.radio_global)
+        self.fit_type2_box.setLayout(self.fit_type2_box_layout)
+
+        self.fit_type1_box = QGroupBox('Type')
+        self.fit_type1_box_layout = QVBoxLayout(self)
+        self.fit_type1_box_layout1 = QHBoxLayout(self)
+        self.fit_type1_box_layout1.addWidget(self.radio_polynomial)
+        self.fit_type1_box_layout1.addWidget(self.radio_sinusoidal)
+        self.fit_type1_box_layout2 = QHBoxLayout(self)
+        self.fit_type1_box_layout2.setAlignment(QtCore.Qt.AlignLeft)
+        self.fit_type1_box_layout2.addWidget(self.polynomial_order_lbl)
+        self.fit_type1_box_layout2.addWidget(self.polynomial_order)
+        self.fit_type1_box_layout.addLayout(self.fit_type1_box_layout1)
+        self.fit_type1_box_layout.addLayout(self.fit_type1_box_layout2)
+        self.fit_type1_box.setLayout(self.fit_type1_box_layout)
+
+        self.fit_type0_box = QGroupBox('Fit Options')
+        self.fit_type0_box_layout = QVBoxLayout(self)
+        self.fit_type0_box_layout.addWidget(self.fit_type1_box)
+        self.fit_type0_box_layout.addWidget(self.fit_type2_box)
+        self.fit_type0_box.setLayout(self.fit_type0_box_layout)
 
         self.select_box = QGroupBox('Calibrations Selection')
         self.select_box_layout = QVBoxLayout(self)
@@ -163,7 +193,7 @@ class QFolderSelectionFrom(QWidget):
 
         self.select_box_layout.addLayout(self.select_box_layout2)
         self.select_box_layout.addWidget(self.calibration_list_widget)
-        self.select_box_layout.addWidget(self.fit_type_box)
+        self.select_box_layout.addWidget(self.fit_type0_box)
         self.select_box_layout.addWidget(self.ProcessButton)
 
         self.select_box.setLayout(self.select_box_layout)
@@ -172,7 +202,9 @@ class QFolderSelectionFrom(QWidget):
         self.setLayout(self.mainLayout)
         #self.setFixedHeight(600)
 
-
+    def typeSelection(self):
+        self.polynomial_order.setEnabled(self.radio_polynomial.isChecked())
+        self.polynomial_order_lbl.setEnabled(self.radio_polynomial.isChecked())
 
     def set_actual_scanner_folder(self):
         try:
