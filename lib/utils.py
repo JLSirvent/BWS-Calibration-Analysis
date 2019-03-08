@@ -36,7 +36,7 @@ import scipy.signal as signal
 import PyQt5.QtCore as QtCore
 
 from os import walk
-from tqdm import tqdm
+#from tqdm import tqdm
 from nptdms import TdmsFile
 from scipy.interpolate import interp1d
 from numpy import NaN, Inf, arange, isscalar, asarray, array
@@ -277,7 +277,7 @@ class CreateRawDataFolder(QtCore.QThread):
 
         i=0
 
-        for tdms_file in tqdm(tdms_files):
+        for tdms_file in tdms_files: #tqdm(tdms_files):
 
             self.notifyProgress.emit(int(i*100 / len(tdms_files)))
             time.sleep(0.1)
