@@ -109,7 +109,7 @@ class plot(mplCanvas):
         ax1.set_ylabel('Laser position [mm]')
         ax1.set_xlabel('Angular Position [rad]')
 
-        values = range(2*len(self.folders) + 1)
+        values = range(len(self.folders) + 1)
         jet = cm = plt.get_cmap('jet')
         cNorm = colors.Normalize(vmin=0, vmax=values[-1])
         scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
@@ -120,12 +120,13 @@ class plot(mplCanvas):
         x_all1 = []
         y_all1 = []
 
-        parameter_file = utils.resource_path('data/parameters.cfg')
+        #parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
 
         for folder in self.folders:
+            colorVal = scalarMap.to_rgba(values[cnt])
             self.calibration = Calibration.Calibration(folder)
 
             #Idx = np.where(sio.loadmat(folder+'/PROCESSED_IN.mat')['data_valid'] == 1)
@@ -134,7 +135,7 @@ class plot(mplCanvas):
             tmp = folder.split(' ')[0]
             tmp = tmp.split('/')[-1]
             for i in range(0,2):
-                colorVal = scalarMap.to_rgba(values[cnt])
+
                 if i == 0:
                     x = self.calibration.occlusion_IN[Idx]#sio.loadmat(folder+'/PROCESSED_IN.mat')['occlusion_position'][Idx]
                     y = self.calibration.laser_position_IN[Idx]#sio.loadmat(folder+'/PROCESSED_IN.mat')['laser_position'][Idx]
@@ -191,7 +192,7 @@ class plot(mplCanvas):
                     Lim_plus = ResidMean + 10 * ResidSTD
 
                     dt.make_histogram(Residuals, [Lim_minus, Lim_plus], '\u03BCm', axe=ax3, color=colorVal)
-                cnt = cnt + 1
+            cnt = cnt + 1
 
 
         if self.globalresiduals == 1:
@@ -220,7 +221,8 @@ class plot(mplCanvas):
 
                 dt.make_histogram(Residuals, [Lim_minus, Lim_plus], '\u03BCm', axe=ax3, color=colorVal)
 
-                cnt = cnt + 1
+                if i % 2 != 0: # Only increase color counter after OUT scan
+                    cnt = cnt + 1
 
         ax1.legend()
         ax3.legend()

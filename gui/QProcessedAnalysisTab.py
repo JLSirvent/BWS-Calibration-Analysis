@@ -103,9 +103,9 @@ class QProcessedAnalysisTab(QWidget):
         self.FileDescriptionTable.see_raw_button.clicked.connect(self.test_tdms)
 
         # We use a parameter file
-        parameter_file = utils.resource_path('data/parameters.cfg')
+        #parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         self.directory = eval(config.get('Application parameters', 'CalibrationsDirectory'))
         # --
 
@@ -244,7 +244,7 @@ class QProcessedAnalysisTab(QWidget):
         # We use a parameter file
         parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         # --
 
         # Process Positions
@@ -267,16 +267,16 @@ class QProcessedAnalysisTab(QWidget):
                                        t1=time__in, t2=time__out, pd1=data__p_d_in, pd2=data__p_d_out)
 
             # We use a parameter file
-            parameter_file = utils.resource_path('data/parameters.cfg')
+            parameter_file = 'data/parameters.cfg'
             config = configparser.RawConfigParser()
             config.read(parameter_file)
             # --
 
             # Process Positions
-            Data_SA_in = ops.process_position(data__s_a_in, utils.resource_path('data/parameters.cfg'), time__in[0], showplot=0, filename=" ", INOUT= 'IN')
-            Data_SB_in = ops.process_position(data__s_b_in, utils.resource_path('data/parameters.cfg'), time__in[0], showplot=0, filename=" ", INOUT= 'IN')
-            Data_SA_out = ops.process_position(data__s_a_out, utils.resource_path('data/parameters.cfg'), time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
-            Data_SB_out = ops.process_position(data__s_b_out, utils.resource_path('data/parameters.cfg'), time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
+            Data_SA_in = ops.process_position(data__s_a_in, parameter_file, time__in[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SB_in = ops.process_position(data__s_b_in, parameter_file, time__in[0], showplot=0, filename=" ", INOUT= 'IN')
+            Data_SA_out = ops.process_position(data__s_a_out, parameter_file, time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
+            Data_SB_out = ops.process_position(data__s_b_out, parameter_file, time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
 
             Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in)
             Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out)

@@ -115,7 +115,7 @@ class plot(mplCanvas):
 
     def compute_initial_figure(self):
         try:
-            parameter_file = utils.resource_path('data/parameters.cfg')
+            parameter_file = 'data/parameters.cfg'
             config = configparser.RawConfigParser()
             config.read(parameter_file)
             rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))

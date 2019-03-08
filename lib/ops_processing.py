@@ -288,9 +288,9 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
     #    data = beginingoff(data)
 
     # We use a parameter file
-    parameter_file = utils.resource_path('data/parameters.cfg')
+    #parameter_file = utils.resource_path('data/parameters.cfg')
     config = configparser.RawConfigParser()
-    config.read(parameter_file)
+    config.read('data/parameters.cfg')
     sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
     peaks_detection_filter_freq = eval(config.get('OPS processing parameters', 'peaks_detection_filter_freq'))
 
@@ -482,9 +482,9 @@ class ProcessRawDataV2(QtCore.QThread):
         scan_number = []
 
         # We use a parameter file
-        parameter_file = utils.resource_path('data/parameters.cfg')
+        #parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
         process_occlusions = eval(config.get('OPS processing parameters','Process_Occlusions'))
         compensate_eccentricity = eval(config.get('OPS processing parameters','Compensate_Eccentricity'))
@@ -535,8 +535,8 @@ class ProcessRawDataV2(QtCore.QThread):
                         scantype = 'OUT'
                         IN = False
 
-                    Data_SA = process_position(_data_SA, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, INOUT= scantype)
-                    Data_SB_O = process_position(_data_SB, utils.resource_path('data/parameters.cfg'), StartTime, showplot=0, INOUT= scantype)
+                    Data_SA = process_position(_data_SA, 'data/parameters.cfg', StartTime, showplot=0, INOUT= scantype)
+                    Data_SB_O = process_position(_data_SB, 'data/parameters.cfg', StartTime, showplot=0, INOUT= scantype)
                     Data_SB_R = utils.resample(Data_SB_O, Data_SA)
 
                     # Eccentricity from OPS processing and saving in list
@@ -705,9 +705,9 @@ class ProcessCalibrationResults(QtCore.QThread):
                 if len(newname) == 2:
                     folder_name = folder_name.split('file:///', 2)[1]
 
-                parameter_file = utils.resource_path('data/parameters.cfg')
+                #parameter_file = utils.resource_path('data/parameters.cfg')
                 config = configparser.RawConfigParser()
-                config.read(parameter_file)
+                config.read('data/parameters.cfg')
                 positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
                 positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
                 tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))

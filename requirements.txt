@@ -1,0 +1,6 @@
+numpy
+scipy
+pyqt5
+configparser
+nptdms
+matplotlib

@@ -165,7 +165,7 @@ class plot(mplCanvas):
                 elif self.in_or_out is 'OUT':
                     self.color = 'red'#'#CF2A1B'
 
-                parameter_file = utils.resource_path('data/parameters.cfg')
+                parameter_file = 'data/parameters.cfg'
                 config = configparser.RawConfigParser()
                 config.read(parameter_file)
                 positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))

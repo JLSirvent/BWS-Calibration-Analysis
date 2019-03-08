@@ -108,9 +108,9 @@ class QFolderSelectionFrom(QWidget):
         # ADDING COMBO BOX WITH AVAILABLE SCANNERS
         # ---------------------------------------------
         # We use a parameter file
-        parameter_file = utils.resource_path('data/parameters.cfg')
+        #parameter_file = utils.resource_path()
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         self.directory = eval(config.get('Application parameters', 'CalibrationsDirectory'))
 
         # Actions

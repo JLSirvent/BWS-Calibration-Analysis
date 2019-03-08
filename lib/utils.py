@@ -245,9 +245,9 @@ class CreateRawDataFolder(QtCore.QThread):
 
     def run(self):
 
-        parameter_file = utils.resource_path('data/parameters.cfg')
+        #parameter_file = utils.resource_path('data/parameters.cfg')
         config = configparser.RawConfigParser()
-        config.read(parameter_file)
+        config.read('data/parameters.cfg')
         tdms_minimum_size = eval(config.get('OPS processing parameters', 'tdms_minimum_size'))
         fatigue_test = config.get('OPS processing parameters', 'fatigue_test')
         offset_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
@@ -523,9 +523,9 @@ def extract_from_tdms(path):
     file = reformate_path(path)
     tdms_file = TdmsFile(file)
 
-    parameter_file = resource_path('data/parameters.cfg')
+    #parameter_file = resource_path('data/parameters.cfg')
     config = configparser.RawConfigParser()
-    config.read(parameter_file)
+    config.read('data/parameters.cfg')
 
     sampling_frequency = eval(config.get('OPS processing parameters', 'sampling_frequency'))
 
@@ -612,9 +612,9 @@ def get_info_from_PROCESSED(path):
     step_size = None
     scan_per_position = None
 
-    parameter_file = resource_path('data/parameters.cfg')
+    #parameter_file = resource_path('data/parameters.cfg')
     config = configparser.RawConfigParser()
-    config.read(parameter_file)
+    config.read('data/parameters.cfg')
     tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
 
     if not os.path.exists(path + '/PROCESSED_IN.mat'):
