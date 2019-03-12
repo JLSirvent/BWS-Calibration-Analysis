@@ -32,7 +32,7 @@ import scipy.io as sio
 import PyQt5.QtCore as QtCore
 import matplotlib.pyplot as plt
 
-#from tqdm import tqdm
+from tqdm import tqdm
 from scipy.stats import norm
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
@@ -500,7 +500,7 @@ class ProcessRawDataV2(QtCore.QThread):
 
         tdms_files = utils.tdms_list_from_folder_sorted(self.raw_data_folder)
 
-        for tdms_file in tdms_files: #tqdm(tdms_files):
+        for tdms_file in tqdm(tdms_files):
 
             if self.verbose is True:
                 print(tdms_file)
