@@ -346,6 +346,7 @@ class QProcessedAnalysisTab(QWidget):
     def update_calibration_list(self,i):
         try:
             full_directory = self.directory + self.CalibrationInformation.scanner_selection_cb.currentText() + '/RawData'
+            print(full_directory)
             self.CalibrationInformation.calibration_selection_cb.clear()
             if os.path.exists(full_directory):
                 folder_list = os.listdir(full_directory)
