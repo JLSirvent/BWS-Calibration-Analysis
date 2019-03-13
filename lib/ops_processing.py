@@ -321,7 +321,6 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
 
         # Method 2
         pcks = find_peaks(filtered_data_short, prominence = valmax/4)[0]
-        print(pcks)
 
         locs = pcks + indexleft
 
