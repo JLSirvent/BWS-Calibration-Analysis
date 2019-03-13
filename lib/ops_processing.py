@@ -55,32 +55,23 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
     rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))
     prominence = eval(config.get('OPS processing parameters', 'prominence'))
-    camelback_threshold = eval(config.get('OPS processing parameters', 'camelback_threshold'))
+    #camelback_threshold = eval(config.get('OPS processing parameters', 'camelback_threshold'))
     OPS_processing_filter_freq = eval(config.get('OPS processing parameters', 'OPS_processing_filter_freq'))
     centroids = False
-
     References_Timming = eval(config.get('OPS processing parameters', 'References_Timming'))
+
     AngularIncrement = 2 * np.pi / SlitsperTurn
 
+    # Data flip if analysing out scan (to always count from the same first reference found)
     if INOUT == 'OUT':
         data = np.flip(data,0)
 
-    threshold_reference = np.amax(data) - camelback_threshold * np.mean(data)
-
-    if camelback_threshold_on is True:
-        data[np.where(data > threshold_reference)] = threshold_reference
-
-    max_data = np.amax(data)
-    min_data = np.amin(data)
-
+    # Data Filtering
     data = utils.butter_lowpass_filter(data, OPS_processing_filter_freq, sampling_frequency, order=5)
+    max_data = np.amax(data)
 
-    #start = time.time()
-    #end = time.time()
-    #print('Filter T: ')
-    #print(end - start)
-
-    data = data - min_data
+    # Data Normalization
+    data = data - np.amin(data)
     data = data / max_data
 
     # start = time.time()
@@ -134,33 +125,44 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
         IndexUp = 0
         A = []
 
-        # Position calculation loop:
-        for i in range(0, LengthMin - 1):
+        # Position calculation loop: OLD METHOD
+        # for i in range(0, LengthMin - 1):
+        #
+        #     # Ensure crossing point in rising edge (locs_dwn < locs_up)
+        #     while locs_dwn[IndexDwn] >= locs_up[IndexUp]:
+        #         IndexUp += 1
+        #
+        #     while locs_dwn[IndexDwn + 1] < locs_up[IndexUp]:
+        #         IndexDwn += 1
+        #
+        #     # Calculate thresshold for current window: Mean point
+        #     Threshold = (data[int(locs_dwn[IndexDwn])] + data[int(locs_up[IndexUp])]) / 2
+        #     # Find time on crossing point:
+        #     b = int(locs_dwn[IndexDwn]) + np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] >= Threshold)[0][0]
+        #     idx_n = np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] < Threshold)[0]
+        #     idx_n = idx_n[::-1][0]
+        #     a = int(locs_dwn[IndexDwn]) + idx_n
+        #
+        #     Crosingpos[0, i] = (Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
+        #
+        #     # if showplot is True or showplot is 1:
+        #     A = np.append(A, Threshold)
+        #
+        #     # Move to next window:
+        #     IndexDwn = IndexDwn + 1
+        #     IndexUp = IndexUp + 1
 
-            # Ensure crossing point in rising edge (locs_dwn < locs_up)
-            while locs_dwn[IndexDwn] >= locs_up[IndexUp]:
-                IndexUp += 1
-
-            while locs_dwn[IndexDwn + 1] < locs_up[IndexUp]:
-                IndexDwn += 1
-
-            # Calculate thresshold for current window: Mean point
-            Threshold = (data[int(locs_dwn[IndexDwn])] + data[int(locs_up[IndexUp])]) / 2
-            # Find time on crossing point:
-            b = int(locs_dwn[IndexDwn]) + np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] >= Threshold)[0][0]
-            idx_n = np.where(data[int(locs_dwn[IndexDwn]):int(locs_up[IndexUp])] < Threshold)[0]
-            idx_n = idx_n[::-1][0]
-            a = int(locs_dwn[IndexDwn]) + idx_n
-
-            Crosingpos[0, i] = (Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
-
-            # if showplot is True or showplot is 1:
-            A = np.append(A, Threshold)
-
-            # Move to next window:
-            IndexDwn = IndexDwn + 1
-            IndexUp = IndexUp + 1
-
+        # Position calculation loop: New Method
+        for i in range(0,LengthMin-1):
+            Idx_dwn = locs_dwn[i]
+            Idx = np.where(locs_up>locs_dwn[i])[0][0]
+            Idx_up = locs_up[Idx]
+            Thesshold = (data[Idx_dwn]+data[Idx_up])/2
+            b = np.where(data[Idx_dwn:Idx_up] >= Thesshold)[0][0] + Idx_dwn
+            a = b-1
+            Crosingpos[0, i] = (Thesshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
+            A = np.append(A, Thesshold)
+        print('out of the loop')
 
     # ==========================================================================
     # Position loss compensation
@@ -264,7 +266,7 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * locs_up * 1 / sampling_frequency, pck_up,
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn,
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A,
-                    threshold_reference / max_data,
+                    1 / max_data,
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * Crosingpos[0][IndexRef1] * (1 / sampling_frequency),
                     Data]
         else:
@@ -272,7 +274,7 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
                     1e3 * StartTime + 1e3 * locs_up * 1 / sampling_frequency, pck_up,
                     1e3 * StartTime + 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn,
                     1e3 * StartTime + 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A,
-                    threshold_reference / max_data,
+                    1 / max_data,
                     1e3 * StartTime + 1e3 * Crosingpos[0][IndexRef1] * (1 / sampling_frequency),
                     Data]
     else:
@@ -304,24 +306,18 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
 
         # Modif by Jose (to avoid false peaks detection)
         margin = 3e-3  # temporal window around min in seconds
-
         valmax = np.amax(filtered_data)
-
         indexvalmax = np.where(filtered_data == valmax)[0][0]
-
         indexleft = indexvalmax - np.int((margin / 2) * sampling_frequency)
         indexright = indexvalmax + np.int((margin / 2) * sampling_frequency)
-
         filtered_data_short = filtered_data[indexleft:indexright]
-
         # -----
         # Method 1
         #pcks = utils.peakdet(filtered_data_short, valmax / 4)[0]
         #pcks = np.transpose(pcks)
 
-        # Method 2
+        # Method 2 (faster?)
         pcks = find_peaks(filtered_data_short, prominence = valmax/4)[0]
-
         locs = pcks + indexleft
 
         if diagnostic_plot == True:
