@@ -515,9 +515,13 @@ class ProcessRawDataV2(QtCore.QThread):
             _laser_position, _scan_number = utils.find_scan_info(tdms_file)
             scan_number.append(int(_scan_number))
             laser_position.append(float(_laser_position))
-
+            start = time.time()
             data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out, data__p_d_in, data__p_d_out, time__in, time__out = utils.extract_from_tdms(tdms_file)
+            end = time.time()
+            print('Loadtime')
+            print(end-start)
 
+            start= time.time()
             for s in range(0,2):
                 try:
                     if s == 0:
@@ -629,6 +633,9 @@ class ProcessRawDataV2(QtCore.QThread):
                         print("Error in file OUT:" + tdms_file)
 
             i += 1
+            end = time.time()
+            print('Processtime')
+            print(end-start)
 
         # Before saving --> Normalize positions wrt tank center
         laser_position = tank_centre - np.asarray(laser_position)
