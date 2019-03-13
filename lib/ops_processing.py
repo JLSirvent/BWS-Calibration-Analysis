@@ -162,7 +162,6 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
             a = b-1
             Crosingpos[0, i] = (Thesshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
             A = np.append(A, Thesshold)
-        print('out of the loop')
 
     # ==========================================================================
     # Position loss compensation
