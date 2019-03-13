@@ -306,44 +306,24 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
         margin = 3e-3  # temporal window around min in seconds
 
         valmax = np.amax(filtered_data)
-        #print(valmax)
 
         indexvalmax = np.where(filtered_data == valmax)[0][0]
-        #print(indexvalmax)
 
         indexleft = indexvalmax - np.int((margin / 2) * sampling_frequency)
         indexright = indexvalmax + np.int((margin / 2) * sampling_frequency)
 
-        #print(indexleft)
-        #print(indexright)
-
         filtered_data_short = filtered_data[indexleft:indexright]
+
         # -----
+        # Method 1
+        #pcks = utils.peakdet(filtered_data_short, valmax / 4)[0]
+        #pcks = np.transpose(pcks)
 
-        pcks = utils.peakdet(filtered_data_short, valmax / 4)[0]
-        pcks = np.transpose(pcks)
+        # Method 2
+        pcks = find_peaks(filtered_data_short, prominence = valmax/4)[0]
+        print(pcks)
 
-        # Modif by Jose:
-        # -------------
-
-        # try:
-        locs = pcks[0] + indexleft
-        # except:
-        #    plt.figure()
-        #    plt.plot(filtered_data)
-        #    plt.show()
-        #    return -1
-
-        # -------------
-
-        pcks = pcks[1]
-
-        sorted_indexes = np.argsort(locs)
-
-        if IN is False:
-            sorted_indexes = sorted_indexes[::-1]
-
-        locs = locs[sorted_indexes].astype(int)  # + int(data.size/4)
+        locs = pcks + indexleft
 
         if diagnostic_plot == True:
             plt.figure()
