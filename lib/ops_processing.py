@@ -55,7 +55,6 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
     rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))
     prominence = eval(config.get('OPS processing parameters', 'prominence'))
-    #camelback_threshold = eval(config.get('OPS processing parameters', 'camelback_threshold'))
     OPS_processing_filter_freq = eval(config.get('OPS processing parameters', 'OPS_processing_filter_freq'))
     centroids = False
     References_Timming = eval(config.get('OPS processing parameters', 'References_Timming'))
@@ -89,7 +88,6 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     # locs_dwn = np.array(mintab)[:, 0]
     # pck_dwn = np.array(mintab)[:, 1]
 
-
     # Method B: Seems Faster
     # ----------------------
     locs_up, _ = find_peaks(data, prominence = prominence)
@@ -108,23 +106,22 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     LengthMin = np.minimum(pck_up.size, pck_dwn.size)
 
     # Crosing position evaluation
-    Crosingpos = np.ones((2, LengthMin))
-    Crosingpos[1][:] = np.arange(1, LengthMin + 1)
+    #CrossingPos = np.ones(LengthMin)
+    #A = np.ones(LengthMin)
+    #Crosingpos[1][:] = np.arange(1, LengthMin + 1)
 
     if centroids == True:
         # ==========================================================================
         # Position processing based on centroids
         # ==========================================================================
-        Crosingpos[0][:] = locs_dwn[0:LengthMin]
+        CrossingPos = locs_dwn[0:LengthMin]
         A = np.ones(LengthMin)
     else:
         # ==========================================================================
         # Position processing based on crossing points: Rising edges only
         # ==========================================================================
-        IndexDwn = 0
-        IndexUp = 0
-        A = []
-
+        #IndexDwn = 0
+        #IndexUp = 0
         # Position calculation loop: OLD METHOD
         # for i in range(0, LengthMin - 1):
         #
@@ -153,25 +150,32 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
         #     IndexUp = IndexUp + 1
 
         # Position calculation loop: New Method
+        CrossingPos =[]
+        A = []
         for i in range(0,LengthMin-1):
             Idx_dwn = locs_dwn[i]
             Idx = np.where(locs_up>locs_dwn[i])[0][0]
             Idx_up = locs_up[Idx]
-            Thesshold = (data[Idx_dwn]+data[Idx_up])/2
-            b = np.where(data[Idx_dwn:Idx_up] >= Thesshold)[0][0] + Idx_dwn
+            Threshold = (data[Idx_dwn]+data[Idx_up])/2
+            b = np.where(data[Idx_dwn:Idx_up] >= Threshold)[0][0] + Idx_dwn
             a = b-1
-            Crosingpos[0, i] = (Thesshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
-            A = np.append(A, Thesshold)
+            #CrossingPos[i] = (Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a
+            #A[i] = Threshold
 
+            CrossingPos.append((Threshold - data[int(a)]) * (b - a) / (data[int(b)] - data[int(a)]) + a)
+            A.append(Threshold)
     # ==========================================================================
     # Position loss compensation
     # ==========================================================================
+    CrossingPos = np.array(CrossingPos)
     # Un-corrected position and time
-    Data_Time = Crosingpos[0][:] * 1 / sampling_frequency
-    Data_Pos = Crosingpos[1][:] * AngularIncrement
+    Data_Time = CrossingPos * 1 / sampling_frequency
+    Data_Pos = np.arange(1, LengthMin) * AngularIncrement
+
+    #print('Good!')
 
     # Relative-distances method for slit-loss compensation:
-    Distances = np.diff(Crosingpos[0][0:Crosingpos.size - 1])
+    Distances = np.diff(CrossingPos[0:CrossingPos.size - 1])
 
     # Method 2: Considering average of several previous periods
     previous_periods = 4
@@ -264,17 +268,17 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
             return [1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * np.arange(0, data.size) * 1 / sampling_frequency, data,
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * locs_up * 1 / sampling_frequency, pck_up,
                     1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn,
-                    1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A,
+                    1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * CrossingPos * 1 / sampling_frequency, A,
                     1 / max_data,
-                    1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * Crosingpos[0][IndexRef1] * (1 / sampling_frequency),
+                    1e3 * (StartTime + len(data)/sampling_frequency) - 1e3 * CrossingPos[IndexRef1] * (1 / sampling_frequency),
                     Data]
         else:
             return [1e3 * StartTime + 1e3 * np.arange(0, data.size) * 1 / sampling_frequency, data,
                     1e3 * StartTime + 1e3 * locs_up * 1 / sampling_frequency, pck_up,
                     1e3 * StartTime + 1e3 * locs_dwn * 1 / sampling_frequency, pck_dwn,
-                    1e3 * StartTime + 1e3 * Crosingpos[0][0:A.size] * 1 / sampling_frequency, A,
+                    1e3 * StartTime + 1e3 * CrossingPos * 1 / sampling_frequency, A,
                     1 / max_data,
-                    1e3 * StartTime + 1e3 * Crosingpos[0][IndexRef1] * (1 / sampling_frequency),
+                    1e3 * StartTime + 1e3 * CrossingPos[IndexRef1] * (1 / sampling_frequency),
                     Data]
     else:
         return Data
@@ -303,14 +307,15 @@ def find_occlusions(data, IN=True, diagnostic_plot=False, StartTime=0, return_pr
         data = np.abs(-data)
         filtered_data = utils.butter_lowpass_filter(data, peaks_detection_filter_freq, sampling_frequency, order=5)
 
-        # Modif by Jose (to avoid false peaks detection)
-        margin = 3e-3  # temporal window around min in seconds
+        # Selecting Region of Interest of Photodiode Sensor Data  (3ms around max)
+        margin = 3e-3
         valmax = np.amax(filtered_data)
         indexvalmax = np.where(filtered_data == valmax)[0][0]
         indexleft = indexvalmax - np.int((margin / 2) * sampling_frequency)
         indexright = indexvalmax + np.int((margin / 2) * sampling_frequency)
         filtered_data_short = filtered_data[indexleft:indexright]
         # -----
+
         # Method 1
         #pcks = utils.peakdet(filtered_data_short, valmax / 4)[0]
         #pcks = np.transpose(pcks)

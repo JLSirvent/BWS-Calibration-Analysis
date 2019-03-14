@@ -150,11 +150,11 @@ class plot(mplCanvas):
         try:
 
             self.fig.clear()
-
             ax1 = self.fig.add_subplot(221)
             ax2 = self.fig.add_subplot(222)
             ax3 = self.fig.add_subplot(223)
             ax4 = self.fig.add_subplot(224)
+            #self.fig.tight_layout()
 
             for i in range(1, 3):
                 if i == 1:
@@ -211,8 +211,6 @@ class plot(mplCanvas):
                 ax_laser.set_title('Angular position on Laser Crossing '+ title, loc='left')
                 ax_laser.set_ylabel('Angular Position [mrad]')
                 ax_laser.set_xlabel('Scan Number')
-
-            self.fig.tight_layout()
 
         except:
             print("Error FPC!")

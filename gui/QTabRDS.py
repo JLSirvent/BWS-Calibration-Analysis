@@ -114,13 +114,20 @@ class plot(mplCanvas):
         super(plot, self).__init__(parent, width, height, dpi)
 
     def compute_initial_figure(self):
-        try:
-            parameter_file = 'data/parameters.cfg'
-            config = configparser.RawConfigParser()
-            config.read(parameter_file)
-            rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))
 
-            self.fig.clear()
+        parameter_file = 'data/parameters.cfg'
+        config = configparser.RawConfigParser()
+        config.read(parameter_file)
+        rdcp = eval(config.get('OPS processing parameters', 'relative_distance_correction_prameters'))
+
+        self.fig.clear()
+        ax1 = self.fig.add_subplot(2,1,1)
+        ax2 = self.fig.add_subplot(2,1,2)
+        ax1.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
+        ax2.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
+        #self.fig.tight_layout()
+
+        try:
 
             color_A = '#018BCF'
             color_B = self.color = '#CF2A1B'
@@ -128,65 +135,59 @@ class plot(mplCanvas):
             time_SA = self.x_IN_A
             time_SB = self.x_OUT_A
 
-            offset=0
+            if time_SA.shape[0]!=200:
+                offset=0
+                for i in np.arange(0, time_SA.shape[0]-1):
+                    distances_A = np.diff(time_SA[i])[offset:time_SA[i].size - 1 - offset]
+                    rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
+                    distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
+                    rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
 
-            ax1 = self.fig.add_subplot(2, 1, 1)
-            ax1.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
+                    xtimeA = time_SA[i][offset:time_SA[i].size - 2 - offset]
+                    xtimeB = time_SB[i][offset:time_SB[i].size - 2 - offset]
 
-            for i in np.arange(0, time_SA.shape[0]-1):
-                distances_A = np.diff(time_SA[i])[offset:time_SA[i].size - 1 - offset]
-                rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
-                distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
-                rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
+                    ax1.plot(xtimeA,rel_distances_A, '.',
+                             color=color_A)
+                    ax1.plot(xtimeB,rel_distances_B, '.',
+                             color=color_B)
 
-                xtimeA = time_SA[i][offset:time_SA[i].size - 2 - offset]
-                xtimeB = time_SB[i][offset:time_SB[i].size - 2 - offset]
+                ax1.set_xlabel('Time [ms]')
+                ax1.set_ylabel('Relative distance')
+                ax1.set_title('RDS plot - IN', loc='left')
+                ax1.set_ylim(0,5)
+                red_patch = mpatches.Patch(color=color_A, label='Sensor A')
+                blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
+                ax1.legend(handles=[blue_patch, red_patch])
+                prairie.style(ax1)
 
-                ax1.plot(xtimeA,rel_distances_A, '.',
-                         color=color_A)
-                ax1.plot(xtimeB,rel_distances_B, '.',
-                         color=color_B)
+                time_SA = self.y_IN_A
+                time_SB = self.y_OUT_A
 
-            ax1.set_xlabel('Time [ms]')
-            ax1.set_ylabel('Relative distance')
-            ax1.set_title('RDS plot - IN', loc='left')
-            ax1.set_ylim(0,5)
-            red_patch = mpatches.Patch(color=color_A, label='Sensor A')
-            blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
-            ax1.legend(handles=[blue_patch, red_patch])
-            prairie.style(ax1)
 
-            time_SA = self.y_IN_A
-            time_SB = self.y_OUT_A
 
-            ax2 = self.fig.add_subplot(2, 1, 2)
-            ax2.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
+                for i in np.arange(0, time_SA.shape[0]-1):
+                    distances_A = np.diff(time_SA[i])[offset:time_SA[i].size - 1 - offset]
+                    rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
+                    distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
+                    rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
 
-            for i in np.arange(0, time_SA.shape[0]-1):
-                distances_A = np.diff(time_SA[i])[offset:time_SA[i].size - 1 - offset]
-                rel_distances_A = np.divide(distances_A[1::], distances_A[0:distances_A.size - 1])
-                distances_B = np.diff(time_SB[i])[offset:time_SB[i].size - 1 - offset]
-                rel_distances_B = np.divide(distances_B[1::], distances_B[0:distances_B.size - 1])
+                    xtimeA =  time_SA[i][offset:time_SA[i].size - 2 - offset]
+                    xtimeB =  time_SB[i][offset:time_SB[i].size - 2 - offset]
 
-                xtimeA =  time_SA[i][offset:time_SA[i].size - 2 - offset]
-                xtimeB =  time_SB[i][offset:time_SB[i].size - 2 - offset]
+                    ax2.plot(xtimeA, rel_distances_A, '.', color=color_A)
+                    ax2.plot(xtimeB, rel_distances_B, '.', color=color_B)
 
-                ax2.plot(xtimeA, rel_distances_A, '.', color=color_A)
-                ax2.plot(xtimeB, rel_distances_B, '.', color=color_B)
+                    #ax2.plot(rel_distances_A, '.', color=color_A)
+                    #ax2.plot(rel_distances_B, '.', color=color_B)
 
-                #ax2.plot(rel_distances_A, '.', color=color_A)
-                #ax2.plot(rel_distances_B, '.', color=color_B)
-
-            ax2.set_xlabel('Time [ms]')
-            ax2.set_ylabel('Relative distance')
-            ax2.set_title('RDS plot - OUT', loc='left')
-            ax2.set_ylim(0,5)
-            red_patch = mpatches.Patch(color=color_A, label='Sensor A')
-            blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
-            ax2.legend(handles=[blue_patch, red_patch])
-            prairie.style(ax2)
-
-            self.fig.tight_layout()
+                ax2.set_xlabel('Time [ms]')
+                ax2.set_ylabel('Relative distance')
+                ax2.set_title('RDS plot - OUT', loc='left')
+                ax2.set_ylim(0,5)
+                red_patch = mpatches.Patch(color=color_A, label='Sensor A')
+                blue_patch = mpatches.Patch(color=color_B, label='Sensor B')
+                ax2.legend(handles=[blue_patch, red_patch])
+                prairie.style(ax2)
 
         except:
             print("Error RDS!")

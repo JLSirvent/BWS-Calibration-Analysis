@@ -145,7 +145,7 @@ class plot(mplCanvas):
         ax4.set_title('Error after compensation OUT', loc='left')
         ax4.set_xlabel('Angular position [rad]')
         ax4.set_ylabel('Position error [\u03BCrad]')
-        self.fig.tight_layout()
+        #self.fig.tight_layout()
 
         try:
 

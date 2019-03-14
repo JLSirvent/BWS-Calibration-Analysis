@@ -148,7 +148,7 @@ class plot(mplCanvas):
         ax1.set_xlabel(self.xlabel)
         ax1.set_title(self.title + 'IN - Sensor A', loc='left')
 
-        ax2 = self.fig.add_subplot(122, sharey=ax1)
+        ax2 = self.fig.add_subplot(122)
         ax2.set_ylabel(self.ylabel)
         ax2.set_xlabel(self.xlabel)
         ax2.set_title(self.title + 'OUT - Sensor A', loc='left')

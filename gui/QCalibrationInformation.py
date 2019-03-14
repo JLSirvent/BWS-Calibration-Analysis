@@ -220,7 +220,7 @@ class QCalibrationInformation(QWidget):
         self.values[0].setText(str(np.round(np.max(spe))))
         self.values[1].setText(str(np.max(calibration.laser_position_IN)))
         self.values[2].setText(str(np.min(calibration.laser_position_IN)))
-        self.values[3].setText(str(np.max(np.abs(np.diff(calibration.laser_position_IN)))))
+        self.values[3].setText('{:.1f}'.format(np.max(np.abs(np.diff(calibration.laser_position_IN)))))
         self.values[4].setText(str(len(set(calibration.scan_number_IN))))
         self.values[5].setText(str(len(calibration.laser_position_IN)))
 

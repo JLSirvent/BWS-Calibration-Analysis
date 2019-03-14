@@ -85,7 +85,7 @@ class Calibration:
             except:
                 self.data_valid_OUT = np.ones(data['laser_position'].size)
 
-            print('fine importation')
+            #print('fine importation')
 
             self.data_valid=np.zeros(data['laser_position'].size)
             self.data_valid[np.where((self.data_valid_IN == 1)&(self.data_valid_IN == 1))] = 1

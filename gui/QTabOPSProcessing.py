@@ -209,13 +209,13 @@ class plot(mplCanvas):
         ax6.set_title('Processing Laser - OUT', loc='left')
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Normalized amplitude [a.u]')
-        self.fig.tight_layout()
+        #self.fig.tight_layout()
 
-        color_IN = '#018BCF'
-        color_OUT = '#CF2A1B'
         black = [0.3, 0.3, 0.3]
 
         parameter_file = 'data/parameters.cfg'
+
+        # Beware that plotting is showing decimated data to no overload the APP
         Dec = 10
 
         if len(self.x_IN_A) != 200:
@@ -224,11 +224,10 @@ class plot(mplCanvas):
             # -----------
             try:
                 P = ops.process_position(self.x_IN_A,  parameter_file, self.t1[0], return_processing=True, INOUT='IN')
-                ax1.axhspan(0, P[8], color='black', alpha=0.05)
                 ax1.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax1.plot( P[2], P[3], '.', markersize=2)
                 ax1.plot( P[4], P[5], '.', markersize=2)
-                ax1.plot( P[6], P[7], '-', linewidth=0.5, color=black)
+                ax1.plot( P[6], P[7], '-', linewidth=0.5, color='k')
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 ax1.axvline(x=refX, color = 'red')
@@ -243,11 +242,10 @@ class plot(mplCanvas):
             # -----------
             try:
                 P = ops.process_position(self.y_IN_A, parameter_file, self.t1[0], return_processing=True, INOUT='IN')
-                ax2.axhspan(0, P[8], color='black', alpha=0.05)
                 ax2.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax2.plot( P[2], P[3], '.', markersize=2)
                 ax2.plot( P[4], P[5], '.', markersize=2)
-                ax2.plot( P[6], P[7], '-', linewidth=0.5, color=black)
+                ax2.plot( P[6], P[7], '-', linewidth=0.5, color='k')
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 ax2.axvline(x=refX, color = 'red')
@@ -261,11 +259,10 @@ class plot(mplCanvas):
             # ------------
             try:
                 P = ops.process_position(self.x_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
-                ax3.axhspan(0, P[8], color='black', alpha=0.05)
                 ax3.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax3.plot( P[2], P[3], '.', markersize=2)
                 ax3.plot( P[4], P[5], '.', markersize=2)
-                ax3.plot( P[6], P[7], '-', linewidth=0.5, color=black)
+                ax3.plot( P[6], P[7], '-', linewidth=0.5, color='k')
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 ax3.axvline(x=refX, color = 'red')
@@ -279,11 +276,10 @@ class plot(mplCanvas):
             # ------------
             try:
                 P = ops.process_position(self.y_OUT_A, parameter_file, self.t2[0], return_processing=True, INOUT='OUT')
-                ax4.axhspan(0, P[8], color='black', alpha=0.05)
                 ax4.plot( P[0][::Dec], P[1][::Dec], linewidth=0.5)
                 ax4.plot( P[2], P[3], '.', markersize=2)
                 ax4.plot( P[4], P[5], '.', markersize=2)
-                ax4.plot( P[6], P[7], '-', linewidth=0.5, color=black)
+                ax4.plot( P[6], P[7], '-', linewidth=0.5, color='k')
                 # Added by Jose --> Visually identify references detection
                 refX = P[9]
                 ax4.axvline(x=refX, color = 'red')

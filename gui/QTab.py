@@ -142,27 +142,31 @@ class plot(mplCanvas):
         ax1.set_title(self.title, loc='left')
         ax1.set_xlabel(self.xlabel)
         ax1.set_ylabel(self.ylabel)
+        #self.fig.tight_layout()
+
         ax1.plot(self.x_IN_A, self.y_IN_A, color='#004466', linewidth=1)
+
         try:
             ax1.plot(self.x_IN_B, self.y_IN_B, color='#018BCF', linewidth=1)
         except:
             pass
+
         ax1.set_xlim([min(self.x_IN_A), max(self.x_IN_A)])
         ax1.legend(['Sensor A', 'Sensor B'])
         prairie.style(ax1)
-        # print(self.x1)
 
         ax2 = self.fig.add_subplot(1, 2, 2)
         ax2.set_title(self.title, loc='left')
         ax2.set_xlabel(self.xlabel)
         ax2.set_ylabel(self.ylabel)
         ax2.plot(self.x_OUT_A, self.y_OUT_A, color='#6E160E', linewidth=1)
+
         try:
             ax2.plot(self.x_OUT_B, self.y_OUT_B, color='#CF2A1B', linewidth=1)
         except:
             pass
+
         ax2.set_xlim([min(self.x_OUT_A), max(self.x_OUT_A)])
         ax2.legend(['Sensor A', 'Sensor B'])
         prairie.style(ax2)
 
-        self.fig.tight_layout()

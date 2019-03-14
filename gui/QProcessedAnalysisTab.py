@@ -455,7 +455,7 @@ class QProcessedAnalysisTab(QWidget):
         #self.calibration.angular_position_SB_OUT = np.pi/2 - self.calibration.angular_position_SB_OUT
 
         Idx = np.where(self.calibration.data_valid == 1)
-        print('fine index found')
+        #print('fine index found')
 
         # SET BOUNDARIES OF CALIBRATION:
         # ------------------------------
@@ -470,7 +470,7 @@ class QProcessedAnalysisTab(QWidget):
             Boundin= [0,0]
             Boundout =[0,0]
 
-        print('fine index found2')
+        #print('fine index found2')
 
         if self.CalibrationInformation.chkCalibrations.isChecked():
             self.parent.LogDialog.add('   Plotting Calibration...', 'info')
@@ -652,10 +652,10 @@ class QProcessedAnalysisTab(QWidget):
 
             self.FileDescriptionTable.table.setItem(i, 0, ChkItem)
             #self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str(laser_position[i])))
-            self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem(str(laser_position[i])))
+            self.FileDescriptionTable.table.setItem(i, 1, QTableWidgetItem('{:.1f}'.format(laser_position[i])))
             self.FileDescriptionTable.table.setItem(i, 2, QTableWidgetItem(str(scan_number[i])))
-            self.FileDescriptionTable.table.setItem(i, 3, QTableWidgetItem(str(occlusion_IN[i])))
-            self.FileDescriptionTable.table.setItem(i, 4, QTableWidgetItem(str(occlusion_OUT[i])))
+            self.FileDescriptionTable.table.setItem(i, 3, QTableWidgetItem('{:.3f}'.format(occlusion_IN[i])))
+            self.FileDescriptionTable.table.setItem(i, 4, QTableWidgetItem('{:.3f}'.format(occlusion_OUT[i])))
 
             self.FileDescriptionTable.table.item(i, 0).setTextAlignment(QtCore.Qt.AlignCenter)
             #self.FileDescriptionTable.table.item(i, 1).setTextAlignment(QtCore.Qt.AlignCenter)
@@ -670,7 +670,7 @@ class QProcessedAnalysisTab(QWidget):
             self.FileDescriptionTable.table.item(i, 2).setFont(font)
             self.FileDescriptionTable.table.item(i, 3).setFont(font)
             self.FileDescriptionTable.table.item(i, 4).setFont(font)
-        print('fine table update')
+        #print('fine table update')
 
     def set_PROCESSED_folder(self, file=None):
 
@@ -687,7 +687,7 @@ class QProcessedAnalysisTab(QWidget):
             #    self.parent.LogDialog.add('PROCESSED info not found in this folder', 'warning')
 
             #else:
-            print(file)
+            #print(file)
             self.actual_PROCESSED_folder = file
             self.actual_index = 0
 
