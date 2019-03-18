@@ -1,5 +1,4 @@
-packages/numpy-1.16.2-cp36-cp36m-manylinux1_x86_64.whl --user
-packages/scipy-1.2.1-cp36-cp36m-manylinux1_x86_64.whl --user
-packages/configparser-3.7.3-py2.py3-none-any.whl --user
-packages/tqdm-4.31.1-py2.py3-none-any.whl --user
-packages/pTDMS-0.13.0-py2.py3-none-any.whl --user
+packages/scipy-1.2.1-cp36-cp36m-manylinux1_x86_64.whl
+packages/configparser-3.7.3-py2.py3-none-any.whl
+packages/tqdm-4.31.1-py2.py3-none-any.whl
+packages/npTDMS-0.13.0-py2.py3-none-any.whl
