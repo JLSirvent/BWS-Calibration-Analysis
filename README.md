@@ -41,7 +41,7 @@ where 'path' is the Anaconda3 installation directory.
 
 ## Distribution in CERN Linux Machines
 
-###### Installation
+**Installation**
 
 1. Ensure that EOS is mounted and you have access:
 
@@ -63,7 +63,7 @@ where 'path' is the Anaconda3 installation directory.
 ```
 5. Once done the application can be launched
 
-###### Launching App
+**Launching App**
 
 1. Access to the App directory in EOS:
 ```
