@@ -19,7 +19,7 @@ For more info go to the [complete documentation (GitHub wiki)](https://github.co
 
 **Configuration:**
 
-1. In the Anaconda promt execute the following commands:
+1. In the Anaconda promt execute the following commands (as administrator):
 ```
 conda install -c anaconda pyqt
 conda install -c conda-forge nptdms
