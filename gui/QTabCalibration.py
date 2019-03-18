@@ -98,7 +98,7 @@ class QTabCalibration(QWidget):
         self.plot.focus = self.focus
         self.CalibCoeff = self.plot.compute_initial_figure()
         self.plot.draw()
-        self.plot.fig.savefig('Stuff.png')
+        #self.plot.fig.savefig('Stuff.png')
 
     def wait(self):
         pass
