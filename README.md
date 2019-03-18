@@ -54,25 +54,25 @@ where 'path' is the Anaconda3 installation directory.
     export PATH
 ```
 3. Enter the application directory:
-
+```
     cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
-
+```
 4. Install application dependencies in your user space:
-
+```
     pip install --user -r requisites.txt
-
+```
 5. Once done the application can be launched
 
 ###### Launching App
 
 1. Access to the App directory in EOS:
-
+```
     cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
-
+```
 2. Launch the application:
-
+```
    python bws_calibration_app.py
-
+```
 
 
 
