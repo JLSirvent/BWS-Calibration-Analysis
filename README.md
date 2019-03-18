@@ -4,7 +4,17 @@
 
 It has been written in **Python 3.7** and is available both as a **library** and used in an **expert GUI**.
 
-**Requisites:**
+For more info go to the [complete documentation (GitHub wiki)](https://github.com/LionelGarcia/BWS-diagnostic/wiki)
+
+<img src="images/BWS_application_illustration.jpg" width="800" align=center>
+
+**Type in Anaconda Prompt and as Administrator:**
+
+
+
+## Distribution in CERN Windows Machines
+
+**Requirements:**
 
 1. Python 3.7 Distribution: [Anaconda](https://www.anaconda.com/download/)
 
@@ -12,36 +22,27 @@ It has been written in **Python 3.7** and is available both as a **library** and
 
 3. Git for windows: [git](https://git-scm.com/downloads)
 
-For more info go to the [complete documentation (GitHub wiki)](https://github.com/LionelGarcia/BWS-diagnostic/wiki)
+**Configuration:**
 
-
-
-<img src="images/BWS_application_illustration.jpg" width="800" align=center>
-
-
-**Type in Anaconda Prompt and as Administrator:**
-
+1. In the Anaconda promt execute the following commands:
+```
 conda install -c anaconda pyqt
-
 conda install -c conda-forge nptdms
-
 pip install configparser
-
 python -m pip install --upgrade scipy
-
-** Add Environment Variables:**
-
+```
+2. Add to the environment variable "PATH" the following
+```
 path\Anaconda3
-
 path\Anaconda3\Scripts
-
 path\Anaconda3\Library\bin
-
+```
 where 'path' is the Anaconda3 installation directory.
+
 
 ## Distribution in CERN Linux Machines
 
-**Installation**
+**Installation:**
 
 1. Ensure that EOS is mounted and you have access:
 
@@ -63,7 +64,7 @@ where 'path' is the Anaconda3 installation directory.
 ```
 5. Once done the application can be launched
 
-**Launching App**
+**Launching the App:**
 
 1. Access to the App directory in EOS:
 ```
