@@ -8,9 +8,6 @@ For more info go to the [complete documentation (GitHub wiki)](https://github.co
 
 <img src="images/BWS_application_illustration.jpg" width="800" align=center>
 
-**Type in Anaconda Prompt and as Administrator:**
-
-
 
 ## Distribution in CERN Windows Machines
 
