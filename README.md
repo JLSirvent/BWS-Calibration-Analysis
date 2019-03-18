@@ -39,6 +39,45 @@ path\Anaconda3\Library\bin
 
 where 'path' is the Anaconda3 installation directory.
 
+*** Distribution in CERN Linux Machines ***
+
+** Installation **
+
+1. Ensure that EOS is mounted and you have access:
+
+   If connected to cwe-513-vol191 type --> eosfusebind
+
+2. Add in ~.bash_profile the following lines to use CO Python 3.6
+
+    PATH=$PATH:$HOME/bin
+
+    PATH="/user/bdisoft/operational/bin/Python/PRO/bin:$PATH"
+
+    export PATH
+
+3. Enter the application directory:
+
+    cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
+
+4. Install application dependencies in your user space:
+
+    pip install --user -r requisites.txt
+
+5. Once done the application can be launched
+
+** Launching App **
+
+1. Access to the App directory in EOS:
+
+    cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
+
+2. Launch the application:
+
+   python bws_calibration_app.py
+
+
+
+
 
 
 
