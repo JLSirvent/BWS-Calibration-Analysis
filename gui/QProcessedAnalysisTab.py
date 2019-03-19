@@ -714,7 +714,6 @@ class QProcessedAnalysisTab(QWidget):
 
             if self.actual_PROCESSED_folder.find(self.actual_TDMS_folder.split('/')[::-1][0]) == -1:
                 self.parent.LogDialog.add('TDMS folder name and PROCESSED folder name do not match', 'warning')
-
             else:
                 self.parent.LogDialog.add('TDMS folder name and PROCESSED folder name are matching', 'info')
 
@@ -724,7 +723,7 @@ class QProcessedAnalysisTab(QWidget):
         if platform.system() == 'Windows':
             os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
         else:
-            os.system('gedit ' + utils.resource_path('data/parameters.cfg'))
+            os.system('gedit data/parameters.cfg')
 
 def main():
     app = QApplication(sys.argv)
