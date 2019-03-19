@@ -32,9 +32,11 @@ import sys
 import csv
 import time
 import shutil
+import platform
 import numpy as np
 import configparser
 import scipy.io as sio
+
 
 from matplotlib import pyplot as plt
 
@@ -232,6 +234,7 @@ class QProcessedAnalysisTab(QWidget):
         self.CalibrationInformation.label_file.setText(file.split('\\')[-1])
 
     def show_parameters_window(self):
+
         os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
 
     def test_tdms_v2(self):
@@ -717,9 +720,11 @@ class QProcessedAnalysisTab(QWidget):
 
     def show_parameters_window(self):
         self.parent.LogDialog.add('Opening ' + utils.resource_path('data/parameters.cfg') + ' ...', 'info')
-        time.sleep(2)
-        os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
 
+        if platform.system() == 'Windows':
+            os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
+        else:
+            os.system('gedit ' + utils.resource_path('data/parameters.cfg'))
 
 def main():
     app = QApplication(sys.argv)
