@@ -41,34 +41,38 @@ where 'path' is the Anaconda3 installation directory.
 
 1. Ensure that EOS is mounted and you have access (Or connect to cwe-513-vol191):
 ```
-    ssh username@cwe-513-vol191
+ssh username@cwe-513-vol191
 ```
 2. Add in ~.bash_profile the following lines to use CO Python 3.6
 ```
-    PATH=$PATH:$HOME/bin
-    PATH="/user/bdisoft/operational/bin/Python/PRO/bin:$PATH"
-    export PATH
-    eosfusebind
+PATH=$PATH:$HOME/bin
+PATH="/user/bdisoft/operational/bin/Python/PRO/bin:$PATH"
+export PATH
+eosfusebind
 ```
 3. Enter the application directory:
 ```
-    cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
+cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
 ```
 4. Install application dependencies in your user space:
 ```
-    pip install --user -r requirements.txt
+pip install --user -r requirements.txt
 ```
 5. Once done the application can be launched
 
 **Launching the App:**
 
-1. Access to the App directory in EOS:
+1. Connect to cwe-513-vol191:
 ```
-    cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
+ssh username@cwe-513-vol191
 ```
-2. Launch the application:
+2. Access to the App directory in EOS:
 ```
-   python bws_calibration_app.py
+cd /eos/project/l/liu-bws/Calibrations/App/BWS-Calibration
+```
+3. Launch the application:
+```
+python bws_calibration_app.py
 ```
 
 
