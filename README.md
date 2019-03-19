@@ -39,15 +39,16 @@ where 'path' is the Anaconda3 installation directory.
 
 **Installation:**
 
-1. Ensure that EOS is mounted and you have access:
-
-   If connected to cwe-513-vol191 type --> eosfusebind
-
+1. Ensure that EOS is mounted and you have access (Or connect to cwe-513-vol191):
+```
+    ssh username@cwe-513-vol191
+```
 2. Add in ~.bash_profile the following lines to use CO Python 3.6
 ```
     PATH=$PATH:$HOME/bin
     PATH="/user/bdisoft/operational/bin/Python/PRO/bin:$PATH"
     export PATH
+    eosfusebind
 ```
 3. Enter the application directory:
 ```
@@ -55,7 +56,7 @@ where 'path' is the Anaconda3 installation directory.
 ```
 4. Install application dependencies in your user space:
 ```
-    pip install --user -r requisites.txt
+    pip install --user -r requirements.txt
 ```
 5. Once done the application can be launched
 
