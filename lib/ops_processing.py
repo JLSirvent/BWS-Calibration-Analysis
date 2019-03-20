@@ -520,7 +520,7 @@ class ProcessRawDataV2(QtCore.QThread):
 
                     Data_SA = process_position(_data_SA, 'data/parameters.cfg', StartTime, showplot=0, INOUT= scantype)
                     Data_SB_O = process_position(_data_SB, 'data/parameters.cfg', StartTime, showplot=0, INOUT= scantype)
-                    Data_SB_R = utils.resample(Data_SB_O, Data_SA)
+                    Data_SB_R = utils.resample(Data_SB_O, Data_SA[0])
 
                     # Eccentricity from OPS processing and saving in list
                     _eccentricity = np.subtract(Data_SA[1], Data_SB_R[1]) / 2
