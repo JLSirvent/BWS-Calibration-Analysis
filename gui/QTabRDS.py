@@ -125,7 +125,7 @@ class plot(mplCanvas):
         ax2 = self.fig.add_subplot(2,1,2)
         ax1.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
         ax2.axhspan(rdcp[1], rdcp[0], color='black', alpha=0.1)
-        #self.fig.tight_layout()
+        self.fig.tight_layout()
 
         try:
 

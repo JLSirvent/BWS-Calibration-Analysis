@@ -142,7 +142,7 @@ class plot(mplCanvas):
         ax1.set_title(self.title, loc='left')
         ax1.set_xlabel(self.xlabel)
         ax1.set_ylabel(self.ylabel)
-        #self.fig.tight_layout()
+        self.fig.tight_layout()
 
         ax1.plot(self.x_IN_A, self.y_IN_A, color='#004466', linewidth=1)
 

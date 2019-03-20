@@ -543,64 +543,53 @@ def plot_calibration_INOUT(folder_name, save=False, saving_name=None, complete_r
         plt.show(block=True)
 
 def plot_peaks_distance(folder_name):
-    filenameIN = 'PROCESSED_OUT.mat'
-    colorIN = '#018BCF'
-
-    #filenameOUT = 'PROCESSED_OUT.mat'
-    #colorOUT = '#0EA318'
-
-    parameter_file = utils.resource_path('data/parameters.cfg')
-    config = configparser.RawConfigParser()
-    config.read(parameter_file)
-    positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
-    positions_for_analysis = eval(config.get('OPS processing parameters', 'positions_for_analysis'))
-    tank_center = eval(config.get('Geometry', 'stages_position_at_tank_center'))
-    SlitsperTurn = eval(config.get('OPS processing parameters', 'slits_per_turn'))
-
-    # IN
-    data = sio.loadmat(folder_name + '/' + filenameIN, struct_as_record=False, squeeze_me=True)
-    occlusion_position = data['occlusion_position']
-    laser_position = data['laser_position']
-    scan_number =  data['scan_number']
-    idxs = np.argsort(scan_number)
-    scan_number = scan_number[idxs]
-    oc = data['oc']
-    valid = data['data_valid']
-    f = plt.figure(figsize = [14,8])
+    f = plt.figure(figsize = [14,7])
     ax0 = f.add_subplot(1,2,1)
+    ax0.set_xlabel('Angular Position [rad]')
+    ax0.set_ylabel('Projected Position [mm]')
+    ax0.set_title('Occlusions Detection')
+
     ax1 = f.add_subplot(1,2,2)
+    ax1.set_ylabel('Distance between occlusions [mm]')
+    ax1.set_xlabel('Projected Position [mm]')
+    ax1.set_title('Occlusions Difference')
 
-    FitOrder = 15
-    laser_position = tank_center - laser_position
-
-    coef = [[],[]]
-    pos = laser_position
-
-    #Cleanup
-    Idx = np.where(valid==1)[0]
-    pos = laser_position[Idx]
-    oc = oc[Idx,:]
-    # **
-
-    for i in range(0, 2):
-        oc_c = oc[:,i]
-        if i == 0:
-            col = 'b'
+    for s in range(0,2):
+        if s == 1:
+            Filename = 'PROCESSED_IN.mat'
+            Col = 'b'
+            Lbl = 'IN'
         else:
-            col = 'r'
+            Filename = 'PROCESSED_OUT.mat'
+            Col = 'r'
+            Lbl = 'OUT'
 
-        popt, pcov = curve_fit(utils.theoretical_laser_position, oc_c,
-                                  pos, bounds=([-5, 80, 100], [5, 500, 500]))
-        datafit = utils.theoretical_laser_position(oc_c, popt[0], popt[1], popt[2])
-        coef[i] = popt
-        ax0.plot(oc_c, pos, '.' + col)
-        ax0.plot(oc_c, datafit, col)
+        data = sio.loadmat(folder_name + '/' + Filename, struct_as_record=False, squeeze_me=True)
+        laser_position = data['laser_position']
+        oc = data['oc']
+        valid = data['data_valid']
 
-    Difference0 =  utils.theoretical_laser_position(oc[:,0], coef[0][0],coef[0][1],coef[0][2]) -  utils.theoretical_laser_position(oc[:, 1], coef[0][0], coef[0][1], coef[0][2])
-    Difference1 =  utils.theoretical_laser_position(oc[:,0], coef[1][0],coef[1][1],coef[1][2]) -  utils.theoretical_laser_position(oc[:, 1], coef[1][0], coef[1][1], coef[1][2])
+        #Cleanup and only take those valid
+        Idx = np.where(valid==1)[0]
+        pos = laser_position[Idx]
+        oc = oc[Idx,:]
+        # **
 
-    ax1.plot(pos,Difference0,'.b',label = 'RMSE: {:.1f}um'.format(np.std(1e3*Difference0)))
-    ax1.plot(pos,Difference1,'.r',label = 'RMSE: {:.1f}um'.format(np.std(1e3*Difference1)))
+        FitOrder = 5
+
+        fit_func = [[],[]]
+        for i in range(0, 2):
+            oc_c = oc[:,i]
+            fit_poly = np.polyfit(oc_c, pos, FitOrder)
+            fit_func[i] = np.poly1d(fit_poly)
+            xfit = np.arange(np.min(oc_c), np.max(oc_c),(np.max(oc_c)-np.min(oc_c))/100)
+            yfit = fit_func[i](xfit)
+            ax0.plot(oc_c, pos, '.' + Col, label = Lbl)
+            ax0.plot(xfit, yfit, Col)
+
+        Difference = np.abs(fit_func[0](oc[:,1]) -  fit_func[0](oc[:,0]))
+
+        ax1.plot(pos,Difference,'.', color = Col ,label = Lbl + '\nMean:{:.2f}mm'.format(np.mean(Difference))+ '\nRMSE: {:.1f}um'.format(np.std(1e3*Difference)))
 
     ax0.grid()
     ax0.legend()

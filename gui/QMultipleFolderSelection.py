@@ -114,9 +114,12 @@ class QFolderSelectionFrom(QWidget):
         self.directory = eval(config.get('Application parameters', 'CalibrationsDirectory'))
 
         # Actions
-        folder_list = os.listdir(self.directory)
-        self.scanner_selection_cb = QComboBox()
+        folder_list = []
+        for name in os.listdir(self.directory):
+            if os.path.isdir(os.path.join(self.directory, name)):
+                folder_list.append(name)
 
+        self.scanner_selection_cb = QComboBox()
         self.scanner_selection_cb.addItem('Select Scanner:')
         self.scanner_selection_cb.addItems(folder_list)
         self.scanner_selection_cb.currentIndexChanged.connect(self.set_actual_scanner_folder)

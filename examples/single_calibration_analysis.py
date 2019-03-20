@@ -52,11 +52,11 @@ from lib import diagnostic_tools as dt
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__10_31 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__16_44 PROCESSED'
 #PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_01 PROCESSED'
-PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_14 PROCESSED'
+#PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PS_PXBWSRB011_CR000001\ProcessedData\S128__2018_01_12__17_14 PROCESSED'
 
+PROCESSED_folder = 'G:\Projects\BWS_Calibrations\Calibrations\PSB_PXBWSRA005-CR000010\ProcessedData\S074__2019_03_08__10_47 PROCESSED'
 
 ParametersCurve = []
-
 
 # Complete calibration plot
 #dt.plot_calibration(folder_name=PROCESSED_folder, in_or_out='IN', complete_residuals_curve=False)

@@ -154,7 +154,7 @@ class plot(mplCanvas):
             ax2 = self.fig.add_subplot(222)
             ax3 = self.fig.add_subplot(223)
             ax4 = self.fig.add_subplot(224)
-            #self.fig.tight_layout()
+            self.fig.tight_layout()
 
             for i in range(1, 3):
                 if i == 1:

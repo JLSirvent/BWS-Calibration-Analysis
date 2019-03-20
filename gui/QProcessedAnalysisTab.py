@@ -112,7 +112,10 @@ class QProcessedAnalysisTab(QWidget):
         # --
 
         # Actions
-        folder_list = os.listdir(self.directory)
+        folder_list = []
+        for name in os.listdir(self.directory):
+            if os.path.isdir(os.path.join(self.directory, name)):
+                folder_list.append(name)
 
         self.CalibrationInformation.scanner_selection_cb.addItem('Select Scanner:')
         self.CalibrationInformation.scanner_selection_cb.addItems(folder_list)
@@ -281,19 +284,35 @@ class QProcessedAnalysisTab(QWidget):
             Data_SA_out = ops.process_position(data__s_a_out, parameter_file, time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
             Data_SB_out = ops.process_position(data__s_b_out, parameter_file, time__out[0], showplot=0, filename=" ", INOUT= 'OUT')
 
-            Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in)
-            Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out)
+            Data_SB_R_in = utils.resample(Data_SB_in, Data_SA_in[0])
+            Data_SB_R_out = utils.resample(Data_SB_out, Data_SA_out[0])
 
             # Eccentricity from OPS processing and saving in list
             _eccentricity_in = np.subtract(Data_SA_in[1], Data_SB_R_in[1]) / 2
             _eccentricity_out = np.subtract(Data_SA_out[1], Data_SB_R_out[1]) / 2
 
             # OPS speed processing and smoothing
+
+            # ResampleF = 50e3
+            # stepinms= 1e3/ResampleF
+            # TimeIN  = np.arange(Data_SA_in[0][0],Data_SA_in[0][-1],stepinms)
+            # TimeOUT = np.arange(Data_SA_out[0][0],Data_SA_out[0][-1],stepinms)
+
+            # print('ok1')
+            # Data_SA_in_r = utils.resample(Data_SA_in,TimeIN)
+            # Data_SB_in_r = utils.resample(Data_SB_in,TimeIN)
+            # Data_SA_out_r = utils.resample(Data_SA_in,TimeOUT)
+            # Data_SB_out_r = utils.resample(Data_SB_in,TimeOUT)
+
             _speed_SA_in = np.divide(np.diff(Data_SA_in[1]), np.diff(Data_SA_in[0]))
             _speed_SB_in = np.divide(np.diff(Data_SB_in[1]), np.diff(Data_SB_in[0]))
 
             _speed_SA_out = np.divide(np.diff(Data_SA_out[1]), np.diff(Data_SA_out[0]))
             _speed_SB_out = np.divide(np.diff(Data_SB_out[1]), np.diff(Data_SB_out[0]))
+
+            #_speed_SA_in = utils.butter_lowpass_filter(_speed_SA_in, 5e3, ResampleF, order=5)
+
+            # print('ok3')
 
             N = 8
             _speed_SA_in = np.convolve(_speed_SA_in,np.ones((N,)) / N, mode='valid')
@@ -301,13 +320,12 @@ class QProcessedAnalysisTab(QWidget):
             _speed_SA_out = np.convolve(_speed_SA_out, np.ones((N,)) / N, mode='valid')
             _speed_SB_out = np.convolve(_speed_SB_out, np.ones((N,)) / N, mode='valid')
 
-
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
                                         np.array([Data_SA_in[0], Data_SA_in[0]]),
                                         np.array([Data_SA_out[0],Data_SA_out[0]]),
                                         np.array([Data_SB_in[0], Data_SB_in[0]]),
                                         np.array([Data_SB_out[0], Data_SA_out[0]]))
-
+            # print('ok4')
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
                                        x1=Data_SA_in[0],
                                        y1=Data_SA_in[1],
@@ -317,7 +335,9 @@ class QProcessedAnalysisTab(QWidget):
                                        y1_2=Data_SB_in[1],
                                        x2_2=Data_SB_out[0],
                                        y2_2=Data_SB_out[1])
-
+            # print('ok5')
+            # plt.plot(1e3*_speed_SA_in)
+            # plt.show()
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
                                        x1=cut(2, Data_SA_in[0][0:len(_speed_SA_in)]),
                                        y1=cut(2, 1e3*_speed_SA_in),
@@ -327,7 +347,7 @@ class QProcessedAnalysisTab(QWidget):
                                        y1_2=cut(2, 1e3*_speed_SB_in),
                                        x2_2=cut(2, Data_SB_out[0][0:len(_speed_SB_out)]),
                                        y2_2=cut(2, -1e3*_speed_SB_out))
-
+            # print('ok5')
             self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
                                              x1=Data_SA_in[1],
                                              y1=1e6*_eccentricity_in,
@@ -721,7 +741,7 @@ class QProcessedAnalysisTab(QWidget):
         self.parent.LogDialog.add('Opening ' + utils.resource_path('data/parameters.cfg') + ' ...', 'info')
 
         if platform.system() == 'Windows':
-            os.system('Notepad ' + utils.resource_path('data/parameters.cfg'))
+            os.system('notepad data/parameters.cfg')
         else:
             os.system('gedit data/parameters.cfg')
 
