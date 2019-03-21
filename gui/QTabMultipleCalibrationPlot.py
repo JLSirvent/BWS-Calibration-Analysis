@@ -109,7 +109,7 @@ class plot(mplCanvas):
         ax1.set_ylabel('Laser position [mm]')
         ax1.set_xlabel('Angular Position [rad]')
 
-        #self.fig.tight_layout()
+        self.fig.tight_layout()
 
         values = range(len(self.folders) + 1)
         jet = cm = plt.get_cmap('jet')

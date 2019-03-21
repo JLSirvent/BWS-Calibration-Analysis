@@ -209,7 +209,7 @@ class plot(mplCanvas):
         ax6.set_title('Processing Laser - OUT', loc='left')
         ax6.set_xlabel('Time [ms]')
         ax6.set_ylabel('Normalized amplitude [a.u]')
-        #self.fig.tight_layout()
+        self.fig.tight_layout()
 
         black = [0.3, 0.3, 0.3]
 

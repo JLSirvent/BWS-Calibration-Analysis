@@ -248,7 +248,8 @@ class plot(mplCanvas):
 
                     prairie.style(self.ax1)
 
-                self.ax1.legend()
+                self.ax1.legend(loc='upper right')
+                ax2.legend(loc='upper right')
         except:
             print('Error Calibration!')
 

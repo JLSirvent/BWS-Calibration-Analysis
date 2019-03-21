@@ -69,70 +69,32 @@ def make_histogram(data, data_range, units, axe=None, color=None, projected=None
     Returns: legend giving mean value and sigma of the gaussian fit
     """
 
-    legends = []
-    means = []
-    sigmas = []
-
     # Data Cleanup
     data = data[(data >= data_range[0]) & (data <= data_range[1])]
     # ----
 
     binshist = np.linspace(data_range[0], data_range[1], 50)
 
-    if projected is True:
-        parameter_file = utils.resource_path('data/parameters.cfg')
-        config = configparser.RawConfigParser()
-        config.read(parameter_file)
-        fork_length = eval(config.get('Scanner parameters', 'fork_length'))
+    data_range = np.asarray(data_range)
+    (mu, sigma) = norm.fit(data)
+    bins = np.arange(data_range[0], data_range[1], (data_range[1] - data_range[0]) / 500)
+    y = mlab.normpdf(bins, mu, sigma)
+    lbl = '\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2)) + '   \n' + '\u03BC ' + "{:3.3f}".format(
+        mu) + '  (' + units + ')'
 
     if axe is None:
-        data_range = np.asarray(data_range)
         plt.hist(data, bins=binshist, normed=0, alpha=0.3)
-        plt.xlim([data_range[0], data_range[1]])
-        (mu, sigma) = norm.fit(data)
-        bins = np.arange(data_range[0], data_range[1], (data_range[1]-data_range[0])/500)
-        y = mlab.normpdf(bins, mu, sigma)
         plt.plot(bins, y, linewidth=2, color='black')
         plt.legend(['\u03C3 : ' + "{:3.3f}".format(sigma/np.sqrt(2)) + ' ' + units + '\n' + '\u03BC: ' + "{:3.3f}".format(mu) + ' ' + units])
 
     else:
 
-        data_range = np.asarray(data_range)
         if color is not None:
             axe.hist(data, bins=binshist, normed=1, alpha=0.3, color=color)
+            axe.plot(bins, y, linewidth=2, color=color, label = lbl)
         else:
             axe.hist(data, bins=binshist, normed=1, alpha=0.3)
-
-        #axe.set_xlim([data_range[0], data_range[1]])
-        (mu, sigma) = norm.fit(data)
-        # bins = np.arange(data_range[0], data_range[1], 0.1)
-        bins = np.arange(data_range[0], data_range[1], (data_range[1] - data_range[0]) / 500)
-        y = mlab.normpdf(bins, mu, sigma)
-        if color is not None:
-            if zorder is not None:
-                axe.plot(bins, y, linewidth=2, color=color, zorder=zorder)
-            else:
-                axe.plot(bins, y, linewidth=2, color=color)
-        else:
-            axe.plot(bins, y, linewidth=2, color='k')
-
-        if axe.get_legend() is not None:
-            texts = axe.get_legend().get_texts()
-            for text in texts:
-                legends.append(text._text)
-
-        if projected is None:
-            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2))+ '   \n' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ')')
-        elif projected is True:
-            legends.append('\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2)) + '   \n' + '\u03BC ' + "{:3.3f}".format(mu) + '  (' + units + ') \n' +
-                           '\u03C3 ' + "{:3.3f}".format(sigma / np.sqrt(2) * fork_length) + '   ' + '\u03BC ' + "{:3.3f}".format(mu * fork_length) + '  (\u03BCm)')
-
-
-
-        means.append(str(mu))
-        sigmas.append(str(sigma / np.sqrt(2)))
-
-        axe.legend(legends, loc='upper right')
+            axe.plot(bins, y, linewidth=2, color= 'k', label = lbl)
 
     return ["{:3.2f}".format(mu), "{:3.2f}".format(sigma / np.sqrt(2))]
 
