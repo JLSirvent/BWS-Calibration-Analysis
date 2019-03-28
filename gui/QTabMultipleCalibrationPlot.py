@@ -68,9 +68,21 @@ class QTabMultipleCalibrationPlot(QWidget):
 
         self.setLayout(main_layout)
 
-    def set_folder(self, folders,fittype0, fittype1, fittype2):
-        self.folders = folders
-        self.plot.folders = folders
+    # def set_folder(self, folders,fittype0, fittype1, fittype2):
+    #     self.folders = folders
+    #     self.plot.folders = folders
+    #     self.plot.fittype = fittype0
+    #     self.plot.fitorder = fittype1
+    #     self.plot.globalresiduals = fittype2
+    #     self.plot.compute_initial_figure()
+    #     self.plot.draw()
+
+    def set_folder(self, Calib_x, Calib_y,labels,fittype0, fittype1, fittype2):
+        self.plot.calib_x = Calib_x
+        self.plot.calib_y = Calib_y
+        self.plot.label = labels
+        #self.folders = folders
+        #self.plot.folders = folders
         self.plot.fittype = fittype0
         self.plot.fitorder = fittype1
         self.plot.globalresiduals = fittype2
@@ -85,6 +97,9 @@ class plot(mplCanvas):
 
         self.folders = []
         self.calibration = 0
+        self.calib_x = [[],[]]
+        self.calib_y = [[],[]]
+        self.label = []
         self.fittype = 0
         self.fitorder = 0
         self.globalresiduals = 0
@@ -110,8 +125,9 @@ class plot(mplCanvas):
         ax1.set_xlabel('Angular Position [rad]')
 
         self.fig.tight_layout()
+        Calibrations = len(self.calib_x[1])
 
-        values = range(len(self.folders) + 1)
+        values = range(Calibrations + 1)
         jet = cm = plt.get_cmap('jet')
         cNorm = colors.Normalize(vmin=0, vmax=values[-1])
         scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
@@ -127,25 +143,14 @@ class plot(mplCanvas):
         config.read('data/parameters.cfg')
         positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
 
-        for folder in self.folders:
+
+        for c in range(0,Calibrations):
             colorVal = scalarMap.to_rgba(values[cnt])
-            self.calibration = Calibration.Calibration(folder)
 
-            #Idx = np.where(sio.loadmat(folder+'/PROCESSED_IN.mat')['data_valid'] == 1)
-            Idx = np.where(self.calibration.data_valid == 1)
-
-            tmp = folder.split(' ')[0]
-            tmp = tmp.split('/')[-1]
             for i in range(0,2):
-
-                if i == 0:
-                    x = self.calibration.occlusion_IN[Idx]#sio.loadmat(folder+'/PROCESSED_IN.mat')['occlusion_position'][Idx]
-                    y = self.calibration.laser_position_IN[Idx]#sio.loadmat(folder+'/PROCESSED_IN.mat')['laser_position'][Idx]
-                    Label = tmp +' IN'
-                if i == 1:
-                    x = self.calibration.occlusion_OUT[Idx]#sio.loadmat(folder+'/PROCESSED_OUT.mat')['occlusion_position'][Idx]
-                    y =  self.calibration.laser_position_OUT[Idx]#sio.loadmat(folder+'/PROCESSED_OUT.mat')['laser_position'][Idx]
-                    Label = tmp+' OUT'
+                x = np.asarray(self.calib_x[i][c][:])
+                y = np.asarray(self.calib_y[i][c][:])
+                Label = self.label[c]
 
                 # Trim vectors for region of interest
                 Idx2 = np.where((y>=positions_for_fit[0])&(y<=positions_for_fit[1]))
@@ -158,9 +163,9 @@ class plot(mplCanvas):
                     x_all1.append(x)
                     y_all1.append(y)
 
-                FitOrder = 5
-                fit_poly = np.polyfit(x,y,FitOrder)
-                fit_func = np.poly1d(fit_poly)
+                #FitOrder = 5
+                #fit_poly = np.polyfit(x,y,FitOrder)
+                #fit_func = np.poly1d(fit_poly)
 
                 minx = np.min(x)
                 maxx = np.max(x)
@@ -175,7 +180,11 @@ class plot(mplCanvas):
                     popt, pcov = curve_fit(utils.theoretical_laser_position, x, y, bounds=([-5, 80, 100], [5, 500, 500]))
                     yfit = utils.theoretical_laser_position(xfit, popt[0], popt[1], popt[2])
 
-                ax1.plot(x,y,'.', label=Label, color = colorVal, markersize=6, alpha = 0.6)
+                if i ==0:
+                    ax1.plot(x,y,'.', label=Label, color = colorVal, markersize=6, alpha = 0.6)
+                else:
+                    ax1.plot(x,y,'.', color = colorVal, markersize=6, alpha = 0.6)
+
                 ax1.plot(xfit,yfit, color = colorVal)
 
                 if self.globalresiduals == 0:
@@ -200,7 +209,7 @@ class plot(mplCanvas):
         if self.globalresiduals == 1:
             popt, pcov = curve_fit(utils.theoretical_laser_position, x_all[3:], y_all[3:], bounds=([-5, 80, 100], [5, 500, 500]))
 
-            fit_poly = np.polyfit( x_all[3:], y_all[3:], FitOrder)
+            fit_poly = np.polyfit( x_all[3:], y_all[3:], self.fitorder)
             fit_func = np.poly1d(fit_poly)
 
             cnt = 0

@@ -28,12 +28,14 @@ from __future__ import unicode_literals
 import os
 import sys
 import scipy.io as sio
+import numpy as np
+from matplotlib import pyplot as plt
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget,QPushButton, QCheckBox, QLabel, QHBoxLayout, QTabWidget, QVBoxLayout, QFileDialog, QApplication
 
-from gui import QMultipleFolderSelection
-from gui import QTabMultipleCalibrationPlot
+from gui import Calibration
+from gui import QMultipleFolderSelection, QTabMultipleCalibrationPlot, QTabSpeeds_Positions
 
 def cut(off, data):
     return data[off:data.size-off]
@@ -54,14 +56,19 @@ class QMultipleCalibrationAnalysis(QWidget):
         self.mainWidget = QWidget()
 
         self.parent = parent
+        self.calibration = []
 
         self.PlotTab = QTabMultipleCalibrationPlot.QTabMultipleCalibrationPlot()
+        self.plot_positions = QTabSpeeds_Positions.QTabSpeeds_Positions('Position ', 'Time [ms]', 'Angular Position [rad]', 1)
+        self.plot_speeds =  QTabSpeeds_Positions.QTabSpeeds_Positions('Speed ', 'Time [ms]', 'Angular speed [rad/s]', 10)
 
         self.folder_selection = QMultipleFolderSelection.QMultipleFolderSelection(parent=self)
         self.folder_selection.setFixedHeight(400)
 
         self.multipleanalysistab = QTabWidget()
-        self.multipleanalysistab.addTab(self.PlotTab, 'Comparision analysis')
+        self.multipleanalysistab.addTab(self.PlotTab, 'Calibration Comparison')
+        self.multipleanalysistab.addTab(self.plot_positions, 'Position Profiles')
+        self.multipleanalysistab.addTab(self.plot_speeds, 'Speed Profiles')
 
         self.super_layout = QHBoxLayout()
         self.super_layout.addWidget(self.folder_selection, 0, QtCore.Qt.AlignTop)
@@ -87,7 +94,63 @@ class QMultipleCalibrationAnalysis(QWidget):
         else:
             fittype[2] = 1
 
-        self.PlotTab.set_folder(self.folder_selection.folder_selection.calibration_list, fittype[0], fittype[1], fittype[2])
+        Speeds = [[],[]]
+        Positions = [[],[]]
+        Times = [[],[]]
+        Calib_x = [[],[]]
+        Calib_y = [[],[]]
+        Labels = []
+
+        for folder in self.folder_selection.folder_selection.calibration_list:
+            tmp = folder.split(' ')[0]
+            tmp = tmp.split('/')[-1]
+            Labels.append(tmp)
+
+            self.calibration = Calibration.Calibration(folder)
+
+            # Retrieve Motion info
+            Speeds[0].append(1e3*self.calibration.speed_IN_SA[1])
+            Speeds[1].append(-1e3*self.calibration.speed_OUT_SA[1])
+            Positions[0].append(self.calibration.angular_position_SA_IN[1])
+            Positions[1].append(self.calibration.angular_position_SA_OUT[1])
+            Times[0].append(self.calibration.time_IN_SA[1])
+            Times[1].append(self.calibration.time_OUT_SA[1])
+
+            # Retrieve Calibration data
+            Idx = np.where(self.calibration.data_valid == 1)
+            Calib_x[0].append(self.calibration.occlusion_IN[Idx])
+            Calib_x[1].append(self.calibration.occlusion_OUT[Idx])
+            Calib_y[0].append(self.calibration.laser_position_IN[Idx])
+            Calib_y[1].append(self.calibration.laser_position_OUT[Idx])
+
+        self.PlotTab.set_folder(Calib_x,Calib_y,Labels, fittype[0], fittype[1], fittype[2])
+
+        self.actualise_multiple_Qtab(self.plot_positions,
+                                     x1=Times[0][:],
+                                     y1=Positions[0][:],
+                                     b1=[0,0],
+                                     x2=Times[1][:],
+                                     y2=Positions[1][:],
+                                     b2=[0,0])
+
+        self.actualise_multiple_Qtab(self.plot_speeds,
+                                     x1=Times[0][:],
+                                     y1=Speeds[0][:],
+                                     b1=[0,0],
+                                     x2=Times[1][:],
+                                     y2=Speeds[1][:],
+                                     b2=[0,0])
+
+
+    def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2):
+        QTab.set_x_IN(x1)
+        QTab.set_y_IN(y1)
+        QTab.set_B_IN(b1)
+        QTab.set_x_OUT(x2)
+        QTab.set_y_OUT(y2)
+        QTab.set_B_OUT(b2)
+        QTab.actualise_ax()
+
 
 def main():
     app = QApplication(sys.argv)

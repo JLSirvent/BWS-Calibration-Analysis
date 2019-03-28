@@ -465,7 +465,6 @@ class QProcessedAnalysisTab(QWidget):
     def actualise_all(self):
 
         self.parent.LogDialog.add('IMPORTING data...', 'info')
-
         self.calibration = Calibration.Calibration(self.actual_PROCESSED_folder)
         self.CalibrationInformation.set_PROCESSED_folder_V2(self.calibration)
         self.tdms_file_list = utils.tdms_list_from_folder(self.actual_TDMS_folder)

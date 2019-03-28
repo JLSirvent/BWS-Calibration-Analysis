@@ -171,7 +171,8 @@ class plot(mplCanvas):
                     times = self.times_out
                     speeds = self.speeds_out
 
-                ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
+                if boundy[0]!= boundy[1]:
+                    ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
 
                 off = 0
                 values = range(len(speeds) + 1)
@@ -179,14 +180,19 @@ class plot(mplCanvas):
                 cNorm = colors.Normalize(vmin=0, vmax=values[-1])
                 scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
 
-                cnt = 1
+                cnt = 0
 
                 for tim, spe in zip(times, speeds):
                     colorVal = scalarMap.to_rgba(values[cnt])
                     spe = np.convolve(spe, np.ones((self.N,)) / self.N, mode='valid')
                     tim = tim[off:spe.size - off]
                     spe = spe[off:spe.size - off]
+
+                    #if labels != None:
                     ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
+                    #else:
+                    #    ax_all.plot(tim, spe, linewidth=0.8, color=colorVal, label = labels[cnt])
+
                     cnt = cnt + 1
 
 
