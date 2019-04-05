@@ -131,7 +131,8 @@ class QMultipleCalibrationAnalysis(QWidget):
                                      b1=[0,0],
                                      x2=Times[1][:],
                                      y2=Positions[1][:],
-                                     b2=[0,0])
+                                     b2=[0,0],
+                                     legends =Labels)
 
         self.actualise_multiple_Qtab(self.plot_speeds,
                                      x1=Times[0][:],
@@ -139,16 +140,18 @@ class QMultipleCalibrationAnalysis(QWidget):
                                      b1=[0,0],
                                      x2=Times[1][:],
                                      y2=Speeds[1][:],
-                                     b2=[0,0])
+                                     b2=[0,0],
+                                     legends=Labels)
 
 
-    def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2):
+    def actualise_multiple_Qtab(self, QTab, x1, y1, x2, y2, b1, b2, legends):
         QTab.set_x_IN(x1)
         QTab.set_y_IN(y1)
         QTab.set_B_IN(b1)
         QTab.set_x_OUT(x2)
         QTab.set_y_OUT(y2)
         QTab.set_B_OUT(b2)
+        QTab.set_legends(legends)
         QTab.actualise_ax()
 
 

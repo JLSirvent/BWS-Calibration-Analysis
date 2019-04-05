@@ -67,6 +67,7 @@ class QTabSpeeds_Positions(QWidget):
         self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.legends = None
         self.N = N
 
         self.plot.title = self.title
@@ -95,6 +96,9 @@ class QTabSpeeds_Positions(QWidget):
     def set_B_OUT(self, B_OUT):
          self.bound_out = B_OUT
 
+    def set_legends(self, legends):
+        self.legends = legends
+
     def actualise_ax(self):
         self.plot.fig.clear()
         self.plot.times_in = self.times_in
@@ -106,6 +110,7 @@ class QTabSpeeds_Positions(QWidget):
         self.plot.title = self.title
         self.plot.xlabel = self.xlabel
         self.plot.ylabel = self.ylabel
+        self.plot.legends = self.legends
         self.plot.N = self.N
         self.plot.compute_initial_figure()
         self.plot.draw()
@@ -129,6 +134,7 @@ class plot(mplCanvas):
         self.title = ''
         self.xlabel = ''
         self.ylabel = ''
+        self.legends = None
         self.N = 1
 
         self.ax1 = 0
@@ -172,7 +178,7 @@ class plot(mplCanvas):
                     speeds = self.speeds_out
 
                 if boundy[0]!= boundy[1]:
-                    ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1)
+                    ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1, label = 'Calibration Region')
 
                 off = 0
                 values = range(len(speeds) + 1)
@@ -188,13 +194,14 @@ class plot(mplCanvas):
                     tim = tim[off:spe.size - off]
                     spe = spe[off:spe.size - off]
 
-                    #if labels != None:
-                    ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
-                    #else:
-                    #    ax_all.plot(tim, spe, linewidth=0.8, color=colorVal, label = labels[cnt])
+                    if self.legends == None:
+                        ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
+                    else:
+                        ax_all.plot(tim, spe, linewidth=0.8, color=colorVal, label=self.legends[cnt])
 
                     cnt = cnt + 1
 
+                ax_all.legend()
 
                 prairie.style(ax_all)
 

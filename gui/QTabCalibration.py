@@ -180,13 +180,6 @@ class plot(mplCanvas):
                     laser_position = laser_position[self.idxs]
                     self.focus = np.where(self.idxs == self.focus)[0]
 
-                    #laser_position = -laser_position + tank_center
-
-                    # DeleteCorrection
-                    # CorrectIndex = np.where((laser_position <= 1.5) & (laser_position >= -36.5))
-                    # laser_position[CorrectIndex] = laser_position[CorrectIndex] - 1
-                    # ----------------
-
                     if i == 0:
                         self.y_IN_A = laser_position
                         self.x_IN_A = occlusion_position
@@ -201,6 +194,7 @@ class plot(mplCanvas):
                         occlusion_position_mean.append(np.mean(occlusion_position[np.where(laser_position == laser_pos)[0]]))
 
                     occlusion_position_mean = np.asarray(occlusion_position_mean)
+
                     popt, pcov = curve_fit(utils.theoretical_laser_position, occlusion_position_mean,
                                            unique_laser_position, bounds=([-5, 80, 100], [5, 500, 500]))
 
@@ -209,7 +203,13 @@ class plot(mplCanvas):
                     theoretical_laser_position = utils.theoretical_laser_position(occlusion_position, popt[0], popt[1], popt[2])
                     param = popt
 
-                    residuals = laser_position - theoretical_laser_position
+                    xfit = np.arange(np.min(occlusion_position),np.max(occlusion_position),(np.max(occlusion_position)-np.min(occlusion_position))/1000)
+                    fit_poly = np.polyfit(occlusion_position, laser_position, 5)
+                    fit_func = np.poly1d(fit_poly)
+                    yfit = fit_func(xfit)
+
+                    #residuals = laser_position - theoretical_laser_position
+                    residuals = laser_position - fit_func(occlusion_position)
 
                     plt.figure(figsize=(6.5, 7.5))
                     prairie.use()
@@ -235,6 +235,7 @@ class plot(mplCanvas):
                         param[2]) + '*' + 'cos(\u03C0-(x + ' + "{:3.2f}".format(
                         param[0]) + '))'
                     LegendText = 'Fit ' + self.in_or_out + ': ' + equation
+
                     print('\n'+ self.in_or_out + ' SCANS')
                     print('*************')
                     print('Calculated Rotation_Offset: ' + "{:3.5f}".format(param[1]))

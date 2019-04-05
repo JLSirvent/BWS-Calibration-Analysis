@@ -145,7 +145,7 @@ class plot(mplCanvas):
         ax4.set_title('Error after compensation OUT', loc='left')
         ax4.set_xlabel('Angular position [rad]')
         ax4.set_ylabel('Position error [\u03BCrad]')
-        #self.fig.tight_layout()
+        self.fig.tight_layout()
 
         try:
 
@@ -162,6 +162,7 @@ class plot(mplCanvas):
                     bound = self.bound_out
                     eccentricity = -self.eccentricities_out
                     angular_position_SA = self.positions_out
+
 
                 off = 50
                 values = range(len(eccentricity) + 1)
@@ -187,7 +188,7 @@ class plot(mplCanvas):
                 for ecc, pos in zip(eccentricity, angular_position_SA):
                     ecc = ecc[off:ecc.size - off]
                     pos = pos[off:pos.size - off]
-                    ecc = utils.resample(np.array([pos, ecc]), np.array([ref_pos, ref_ecc]))
+                    ecc = utils.resample(np.array([pos, ecc]), np.array([ref_pos]))
                     ecc_all.append(ecc[1])
 
                 [ref_ecc, ref_pos] = [eccentricity[0], angular_position_SA[0]]
