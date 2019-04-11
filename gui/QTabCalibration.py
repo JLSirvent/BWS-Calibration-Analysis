@@ -208,6 +208,9 @@ class plot(mplCanvas):
                     fit_func = np.poly1d(fit_poly)
                     yfit = fit_func(xfit)
 
+                    print(self.in_or_out)
+                    print(fit_poly)
+
                     #residuals = laser_position - theoretical_laser_position
                     residuals = laser_position - fit_func(occlusion_position)
 

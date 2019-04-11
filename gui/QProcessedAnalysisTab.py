@@ -268,10 +268,9 @@ class QProcessedAnalysisTab(QWidget):
 
         if type(data__s_a_in) is not int:
 
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_OPS_processing,
+            PD = self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_OPS_processing,
                                        data__s_a_in, data__s_b_in, data__s_a_out, data__s_b_out,
                                        t1=time__in, t2=time__out, pd1=data__p_d_in, pd2=data__p_d_out)
-
             # We use a parameter file
             parameter_file = 'data/parameters.cfg'
             config = configparser.RawConfigParser()
@@ -320,13 +319,13 @@ class QProcessedAnalysisTab(QWidget):
             _speed_SA_out = np.convolve(_speed_SA_out, np.ones((N,)) / N, mode='valid')
             _speed_SB_out = np.convolve(_speed_SB_out, np.ones((N,)) / N, mode='valid')
 
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
+            self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_RDS,
                                         np.array([Data_SA_in[0], Data_SA_in[0]]),
                                         np.array([Data_SA_out[0],Data_SA_out[0]]),
                                         np.array([Data_SB_in[0], Data_SB_in[0]]),
                                         np.array([Data_SB_out[0], Data_SA_out[0]]))
-            # print('ok4')
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_position,
+
+            self.actualise_single_QTab_V2(self.TabWidgetPlotting.tab_position,
                                        x1=Data_SA_in[0],
                                        y1=Data_SA_in[1],
                                        x2=Data_SA_out[0],
@@ -334,11 +333,10 @@ class QProcessedAnalysisTab(QWidget):
                                        x1_2=Data_SB_in[0],
                                        y1_2=Data_SB_in[1],
                                        x2_2=Data_SB_out[0],
-                                       y2_2=Data_SB_out[1])
-            # print('ok5')
-            # plt.plot(1e3*_speed_SA_in)
-            # plt.show()
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_speed,
+                                       y2_2=Data_SB_out[1],
+                                       occ_time= PD)
+
+            self.actualise_single_QTab_V2(self.TabWidgetPlotting.tab_speed,
                                        x1=cut(2, Data_SA_in[0][0:len(_speed_SA_in)]),
                                        y1=cut(2, 1e3*_speed_SA_in),
                                        x2=cut(2, Data_SA_out[0][0:len(_speed_SA_out)]),
@@ -346,9 +344,10 @@ class QProcessedAnalysisTab(QWidget):
                                        x1_2=cut(2, Data_SB_in[0][0:len(_speed_SB_in)]),
                                        y1_2=cut(2, 1e3*_speed_SB_in),
                                        x2_2=cut(2, Data_SB_out[0][0:len(_speed_SB_out)]),
-                                       y2_2=cut(2, -1e3*_speed_SB_out))
-            # print('ok5')
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_eccentricity,
+                                       y2_2=cut(2, -1e3*_speed_SB_out),
+                                       occ_time=PD)
+
+            self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_eccentricity,
                                              x1=Data_SA_in[1],
                                              y1=1e6*_eccentricity_in,
                                              x2=Data_SA_out[1],
@@ -499,7 +498,7 @@ class QProcessedAnalysisTab(QWidget):
 
             # CALIBRATION IN-OUT
             # ------------------
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_calibration_IN,
+            self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_calibration_IN,
                                        self.calibration.occlusion_IN[Idx],
                                        self.calibration.laser_position_IN[Idx],
                                        self.calibration.occlusion_OUT[Idx],
@@ -564,7 +563,7 @@ class QProcessedAnalysisTab(QWidget):
 
             # FIXED POINT CALIBRATION (FPC)
             # ----------------------------
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_fpc,
+            self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_fpc,
                                             x1 = self.calibration.time_IN_SA[Idx],
                                             y1 = self.calibration.angular_position_SA_IN[Idx],
                                             x2 = self.calibration.time_OUT_SA[Idx],
@@ -580,7 +579,7 @@ class QProcessedAnalysisTab(QWidget):
             self.parent.LogDialog.add('   Plotting FPC...', 'info')
             # RELATIVE DISTANCE SIGNATURE PLOT (RDS)
             # ----------------------------
-            self.actualise_single_QTab(self.TabWidgetPlotting.tab_RDS,
+            self.actualise_single_QTab_V1(self.TabWidgetPlotting.tab_RDS,
                                        self.calibration.time_IN_SA[Idx],
                                        self.calibration.time_OUT_SA[Idx],
                                        self.calibration.time_IN_SB[Idx],
@@ -612,8 +611,7 @@ class QProcessedAnalysisTab(QWidget):
         QTab.set_B_OUT(b2)
         QTab.actualise_ax()
 
-    def actualise_single_QTab(self, QTab, x1, y1, x2, y2, x1_2=None, y1_2=None, x2_2=None, y2_2=None, t1=None, t2=None, pd1=None, pd2=None):
-
+    def actualise_single_QTab_V1(self, QTab, x1, y1, x2, y2, x1_2=None, y1_2=None, x2_2=None, y2_2=None, t1=None, t2=None, pd1=None, pd2=None):
         QTab.set_x_IN_A(x1)
         QTab.set_y_IN_A(y1)
         QTab.set_x_OUT_A(x2)
@@ -633,7 +631,35 @@ class QProcessedAnalysisTab(QWidget):
             QTab.set_pd1(pd1)
             QTab.set_pd2(pd2)
 
+        PD = QTab.actualise_ax()
+        return PD
+
+    def actualise_single_QTab_V2(self, QTab, x1, y1, x2, y2, x1_2=None, y1_2=None, x2_2=None, y2_2=None, t1=None, t2=None, pd1=None, pd2=None, occ_time=None,):
+
+        QTab.set_x_IN_A(x1)
+        QTab.set_y_IN_A(y1)
+        QTab.set_x_OUT_A(x2)
+        QTab.set_y_OUT_A(y2)
+
+        if occ_time is not None:
+            QTab.set_occ_time(occ_time)
+
+        if x1_2 is not None:
+            QTab.set_x_IN_B(x1_2)
+            QTab.set_y_IN_B(y1_2)
+            QTab.set_x_OUT_B(x2_2)
+            QTab.set_y_OUT_B(y2_2)
+
+        if t1 is not None:
+            QTab.set_t1(t1)
+            QTab.set_t2(t2)
+
+        if pd1 is not None:
+            QTab.set_pd1(pd1)
+            QTab.set_pd2(pd2)
+
         QTab.actualise_ax()
+
 
     def actualise_file_table(self):
 

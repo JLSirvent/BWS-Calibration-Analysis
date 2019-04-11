@@ -26,6 +26,7 @@
 
 from __future__ import unicode_literals
 
+import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from matplotlib.backends.backend_qt5 import NavigationToolbar2QT as NavigationToolbar
@@ -70,6 +71,7 @@ class QTab(QWidget):
         self.x_OUT_B = [0, 1]
         self.y_IN_B = [0, 1]
         self.y_OUT_B = [0, 1]
+        self.occ_time = [0,0]
 
         self.setLayout(main_layout)
 
@@ -97,6 +99,9 @@ class QTab(QWidget):
     def set_y_OUT_B(self, y2):
         self.y_OUT_B = y2
 
+    def set_occ_time(self,occ_time):
+        self.occ_time = occ_time
+
     def actualise_ax(self):
         self.plot.fig.clear()
         self.plot.x_IN_A = self.x_IN_A
@@ -107,6 +112,7 @@ class QTab(QWidget):
         self.plot.x_OUT_B = self.x_OUT_B
         self.plot.y_IN_B = self.y_IN_B
         self.plot.y_OUT_B = self.y_OUT_B
+        self.plot.occ_time = self.occ_time
         self.plot.title = self.title
         self.plot.xlabel = self.xlabel
         self.plot.ylabel = self.ylabel
@@ -127,6 +133,7 @@ class plot(mplCanvas):
         self.x_OUT_B = [0, 1]
         self.y_IN_B = [0, 1]
         self.y_OUT_B = [0, 1]
+        self.occ_time = [0, 0]
 
         self.title = ''
         self.xlabel = ''
@@ -137,36 +144,52 @@ class plot(mplCanvas):
     def compute_initial_figure(self):
 
         self.fig.clear()
-
         ax1 = self.fig.add_subplot(1, 2, 1)
         ax1.set_title(self.title, loc='left')
         ax1.set_xlabel(self.xlabel)
         ax1.set_ylabel(self.ylabel)
-        self.fig.tight_layout()
-
-        ax1.plot(self.x_IN_A, self.y_IN_A, color='#004466', linewidth=1)
-
-        try:
-            ax1.plot(self.x_IN_B, self.y_IN_B, color='#018BCF', linewidth=1)
-        except:
-            pass
-
-        ax1.set_xlim([min(self.x_IN_A), max(self.x_IN_A)])
-        ax1.legend(['Sensor A', 'Sensor B'])
-        prairie.style(ax1)
 
         ax2 = self.fig.add_subplot(1, 2, 2)
         ax2.set_title(self.title, loc='left')
         ax2.set_xlabel(self.xlabel)
         ax2.set_ylabel(self.ylabel)
-        ax2.plot(self.x_OUT_A, self.y_OUT_A, color='#6E160E', linewidth=1)
 
+        self.fig.tight_layout()
+
+        if self.occ_time != [0, 0]:
+            Idx = np.where(self.x_IN_A > self.occ_time[0])[0][0]
+            ax1.axvline(self.x_IN_A[Idx], color='red', linestyle = '--', alpha = 0.6, label='Laser Cross:\n{:.2f}'.format(self.y_IN_A[Idx]))
+            ax1.axhline(self.y_IN_A[Idx], color='red', linestyle = '--', alpha = 0.6)
+            Idx = np.where(self.x_OUT_A < self.occ_time[1])[0][0]
+            ax2.axvline(self.x_OUT_A[Idx], color='red', linestyle = '--', alpha = 0.6,label='Laser Cross:\n{:.2f}'.format(self.y_OUT_A[Idx]))
+            ax2.axhline(self.y_OUT_A[Idx], color='red',linestyle = '--', alpha = 0.6)
+
+        ax1.plot(self.x_IN_A, self.y_IN_A, color='#004466', linewidth=1, label='Sensor A')
         try:
-            ax2.plot(self.x_OUT_B, self.y_OUT_B, color='#CF2A1B', linewidth=1)
+            ax1.plot(self.x_IN_B, self.y_IN_B, color='#018BCF', linewidth=1, label='Sensor B')
         except:
             pass
+        ax1.set_xlim([min(self.x_IN_A), max(self.x_IN_A)])
 
+
+        ax2.plot(self.x_OUT_A, self.y_OUT_A, color='#6E160E', linewidth=1, label='Sensor A')
+        try:
+            ax2.plot(self.x_OUT_B, self.y_OUT_B, color='#CF2A1B', linewidth=1, label='Sensor B')
+        except:
+            pass
         ax2.set_xlim([min(self.x_OUT_A), max(self.x_OUT_A)])
-        ax2.legend(['Sensor A', 'Sensor B'])
+
+        maxy = np.max([np.max(self.y_IN_A),np.max(self.y_OUT_A)])
+        miny = np.min([np.min(self.y_IN_A),np.min(self.y_OUT_A)])
+
+        margin = 0.05
+        maxy = maxy + maxy*margin
+        miny = miny - np.abs(miny*margin)
+
+        ax2.legend(loc = 'upper right')
+        ax1.legend(loc = 'upper left')
+        ax1.set_ylim(miny,maxy)
+        ax2.set_ylim(miny,maxy)
+        prairie.style(ax1)
         prairie.style(ax2)
 
