@@ -668,7 +668,7 @@ class QProcessedAnalysisTab(QWidget):
         laser_position = self.calibration.laser_position_IN
         scan_number = self.calibration.scan_number_IN
         occlusion_IN = self.calibration.occlusion_IN
-        occlusion_OUT = self.calibration.occlusion_IN
+        occlusion_OUT = self.calibration.occlusion_OUT
         data_valid = self.calibration.data_valid
 
         self.FileDescriptionTable.table.setRowCount(laser_position.size)
