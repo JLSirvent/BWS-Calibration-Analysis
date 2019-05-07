@@ -211,6 +211,8 @@ class plot(mplCanvas):
                     print(self.in_or_out)
                     print(fit_poly)
 
+                    param2=fit_poly[:]
+
                     #residuals = laser_position - theoretical_laser_position
                     residuals = laser_position - fit_func(occlusion_position)
 
@@ -245,7 +247,7 @@ class plot(mplCanvas):
                     print('Calculated Fork_Length: ' + "{:3.5f}".format(param[2]))
                     print('Calculated Fork_Phase: ' + "{:3.5f}".format(param[0]))
 
-                    Parameters.append(param)
+                    Parameters.append(param2)
                     self.ax1.plot(occlusion_position_mean, theorical_laser_position_mean, linewidth=0.5, color=self.color, label = LegendText)
                     self.ax1.plot(occlusion_position, laser_position, '.', color=self.color, markersize=6, alpha = 0.6)
                     self.foc_marker[i], = self.ax1.plot(occlusion_position[self.focus], laser_position[self.focus], 'o', color= self.color, fillstyle='none', markersize=10)

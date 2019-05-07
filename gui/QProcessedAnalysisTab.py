@@ -504,14 +504,26 @@ class QProcessedAnalysisTab(QWidget):
                                        self.calibration.occlusion_OUT[Idx],
                                        self.calibration.laser_position_OUT[Idx])
 
+
             # Generate CSV File to store calibration coefficients
+            Spedin = np.mean(1e3 * self.calibration.speed_IN_SA[0][Idxin])
+            Spedout = np.mean(-1e3 * self.calibration.speed_OUT_SA[0][Idxout])
             Param = self.TabWidgetPlotting.tab_calibration_IN.CalibCoeff
-            with open(self.actual_PROCESSED_folder + '/Coeff.csv','w') as csvfile:
-                fieldnames = ['Scan','Co','Fl','Alpha']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerow({'Scan': 'IN', 'Co': Param[0][1], 'Fl': Param[0][2], 'Alpha': Param[0][0]})
-                writer.writerow({'Scan': 'OUT','Co': Param[1][1], 'Fl': Param[1][2], 'Alpha': Param[1][0]})
+            fieldnames = ['Serial', 'Scan', 'Av.Speed [rads-1]']
+            RowIN = [self.CalibrationInformation.scanner_selection_cb.currentText(), 'IN', '{:.0f}'.format(Spedin)]
+            RowOUT = [self.CalibrationInformation.scanner_selection_cb.currentText(), 'OUT','{:.0f}'.format(Spedout)]
+            for i in range(0,len(Param[0])):
+                fieldnames.append('x{:.0f}'.format(len(Param[0])-i-1))
+                RowIN.append(Param[0][i])
+                RowOUT.append(Param[1][i])
+
+            MyData = [fieldnames,RowIN,RowOUT]
+
+            myfile = open(self.actual_PROCESSED_folder + '/CalibData.csv','w')
+            with myfile:
+                writer = csv.writer(myfile, delimiter=',', lineterminator='\n')
+                writer.writerows(MyData)
+
 
             self.TabWidgetPlotting.tab_calibration_IN.plot.fig.savefig(self.actual_PROCESSED_folder + '/Calibration.png')
 

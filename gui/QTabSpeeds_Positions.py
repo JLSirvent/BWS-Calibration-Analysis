@@ -61,8 +61,8 @@ class QTabSpeeds_Positions(QWidget):
         self.speeds_in = [0, 1]
         self.times_out = [0, 1]
         self.speeds_out = [0, 1]
-        self.bound_in = [0, 1]
-        self.bound_out = [0, 1]
+        self.bound_in = None
+        self.bound_out = None
 
         self.title = title
         self.xlabel = xlabel
@@ -128,8 +128,8 @@ class plot(mplCanvas):
         self.speeds_in = [0, 1]
         self.times_out = [0, 1]
         self.speeds_out = [0, 1]
-        self.bound_in = [0, 1]
-        self.bound_out = [0, 1]
+        self.bound_in = None
+        self.bound_out = None
 
         self.title = ''
         self.xlabel = ''
@@ -177,8 +177,10 @@ class plot(mplCanvas):
                     times = self.times_out
                     speeds = self.speeds_out
 
-                if boundy[0]!= boundy[1]:
+                try:
                     ax_all.axvspan(boundy[0], boundy[1], color='red', alpha=0.1, label = 'Calibration Region')
+                except:
+                    pass
 
                 off = 0
                 values = range(len(speeds) + 1)
@@ -198,6 +200,7 @@ class plot(mplCanvas):
                         ax_all.plot(tim, spe, linewidth=0.8, color=colorVal)
                     else:
                         ax_all.plot(tim, spe, linewidth=0.8, color=colorVal, label=self.legends[cnt])
+                        ax_all.axvspan(boundy[cnt][0], boundy[cnt][1], color=colorVal, alpha=0.1)
 
                     cnt = cnt + 1
 

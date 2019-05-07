@@ -100,6 +100,7 @@ class QMultipleCalibrationAnalysis(QWidget):
         Calib_x = [[],[]]
         Calib_y = [[],[]]
         Labels = []
+        b = [[],[]]
 
         for folder in self.folder_selection.folder_selection.calibration_list:
             tmp = folder.split(' ')[0]
@@ -116,6 +117,34 @@ class QMultipleCalibrationAnalysis(QWidget):
             Times[0].append(self.calibration.time_IN_SA[1])
             Times[1].append(self.calibration.time_OUT_SA[1])
 
+            # SET BOUNDARIES OF CALIBRATION:
+            # ------------------------------
+            Idx = np.where(self.calibration.data_valid == 1)
+            try:
+                SIndex = 0
+
+                Idxin0 = np.where(self.calibration.angular_position_SA_IN[SIndex] > np.min(self.calibration.occlusion_IN[Idx]))[0][0]
+                Idxin1 = np.where(self.calibration.angular_position_SA_IN[SIndex] < np.max(self.calibration.occlusion_IN[Idx]))[0][-1]
+
+                Idxout0 = np.where(self.calibration.angular_position_SA_OUT[SIndex] > np.min(self.calibration.occlusion_OUT[Idx]))[0][0]
+                Idxout1 = np.where(self.calibration.angular_position_SA_OUT[SIndex] < np.max(self.calibration.occlusion_OUT[Idx]))[0][-1]
+
+                Boundin = [self.calibration.time_IN_SA[SIndex][Idxin0],
+                           self.calibration.time_IN_SA[SIndex][Idxin1]]
+
+                Boundout = [self.calibration.time_OUT_SA[SIndex][Idxout0],
+                            self.calibration.time_OUT_SA[SIndex][Idxout1]]
+            except:
+                print('Error determining calibration boundaries')
+                Boundin = [0, 0]
+                Boundout = [0, 0]
+
+            #print(Boundin)
+            #print(Boundout)
+
+            b[0].append(Boundin)
+            b[1].append(Boundout)
+
             # Retrieve Calibration data
             Idx = np.where(self.calibration.data_valid == 1)
             Calib_x[0].append(self.calibration.occlusion_IN[Idx])
@@ -128,19 +157,19 @@ class QMultipleCalibrationAnalysis(QWidget):
         self.actualise_multiple_Qtab(self.plot_positions,
                                      x1=Times[0][:],
                                      y1=Positions[0][:],
-                                     b1=[0,0],
+                                     b1=b[0],
                                      x2=Times[1][:],
                                      y2=Positions[1][:],
-                                     b2=[0,0],
+                                     b2=b[1],
                                      legends =Labels)
 
         self.actualise_multiple_Qtab(self.plot_speeds,
                                      x1=Times[0][:],
                                      y1=Speeds[0][:],
-                                     b1=[0,0],
+                                     b1=b[0],
                                      x2=Times[1][:],
                                      y2=Speeds[1][:],
-                                     b2=[0,0],
+                                     b2=b[1],
                                      legends=Labels)
 
 
