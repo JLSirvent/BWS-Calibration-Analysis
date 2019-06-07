@@ -190,7 +190,14 @@ def process_position(data, parameter_file, StartTime, showplot=False, filename=N
     # Method 1: Only consider previous transition
     #RelDistr = np.divide(Distances[1:Distances.size], Distances[0:Distances.size - 1])
 
-    # Search of compensation points:
+    # Search of compensation points (Partial slit reflection loss):
+    # PointsCompensation = np.where(RelDistr < 0.6)[0]
+    # for b in np.arange(0, PointsCompensation.size):
+    #     if RelDistr[PointsCompensation[b]-1] <= rdcp[0]:
+    #         Data_Pos[(PointsCompensation[b] + 1 + previous_periods):Data_Pos.size] = Data_Pos[(
+    #             PointsCompensation[b] + 1 + previous_periods):Data_Pos.size] - AngularIncrement
+
+    # Search of compensation points (Full slit reflection loss):
     PointsCompensation = np.where(RelDistr >= rdcp[0])[0]
 
     for b in np.arange(0, PointsCompensation.size):
@@ -557,6 +564,7 @@ class ProcessRawDataV2(QtCore.QThread):
 
                     else:
                         _occlusion = StartTime + 0.02
+                        _oc = [_occlusion, _occlusion]
 
                     if s==0:
                         eccentricity_in.append(_eccentricity)

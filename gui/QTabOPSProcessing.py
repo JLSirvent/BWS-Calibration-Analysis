@@ -27,6 +27,7 @@
 from __future__ import unicode_literals
 
 import numpy as np
+import configparser
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QStackedWidget
@@ -290,34 +291,45 @@ class plot(mplCanvas):
                 print('Error processing Sensor B_OUT')
             prairie.style(ax4)
 
-            # PHOTODIODE IN
-            # -------------
-            ax5.plot(1e3 * self.t1[::Dec], self.pd1[::Dec], linewidth=1)
-            try:
-                occ_IN = ops.find_occlusions(self.pd1, IN=True, StartTime=self.t1[0], return_processing=True)
-                ax5.plot(1e3 * occ_IN[2][::Dec], occ_IN[3][::Dec], linewidth=1)
-                ax5.axvline(x = 1e3*occ_IN[0][0], color = 'red')
-                ax5.axvline(x = 1e3*occ_IN[0][1], color = 'red')
-                ax5.legend(['PD data Raw', 'PD data Filt.' ,'Detected occlusions'])
-                PD_IN = np.mean([1e3 * occ_IN[0][0], 1e3 * occ_IN[0][1]])
-            except:
-                PD_IN = 0
-                print('Error detecting Occlusions IN')
-            prairie.style(ax5)
+            # We use a parameter file
+            parameter_file = 'data/parameters.cfg'
+            config = configparser.RawConfigParser()
+            config.read(parameter_file)
+            # --
 
-            # PHOTODIODE OUT
-            # --------------
-            ax6.plot(1e3 * self.t2[::Dec], self.pd2[::Dec], linewidth=1)
-            try:
-                occ_OUT = ops.find_occlusions(self.pd2, IN=False, StartTime=self.t2[0], return_processing=True)
-                ax6.plot(1e3 * occ_OUT[2][::Dec], occ_OUT[3][::Dec], linewidth=1)
-                ax6.axvline(x = 1e3*occ_OUT[0][0], color = 'red')
-                ax6.axvline(x = 1e3*occ_OUT[0][1], color = 'red')
-                PD_OUT = np.mean([1e3 * occ_OUT[0][0], 1e3 * occ_OUT[0][1]])
-            except:
+            if eval(config.get('OPS processing parameters', 'Process_Occlusions'))== True:
+                # PHOTODIODE IN
+                # -------------
+                ax5.plot(1e3 * self.t1[::Dec], self.pd1[::Dec], linewidth=1)
+                try:
+                    occ_IN = ops.find_occlusions(self.pd1, IN=True, StartTime=self.t1[0], return_processing=True)
+                    ax5.plot(1e3 * occ_IN[2][::Dec], occ_IN[3][::Dec], linewidth=1)
+                    ax5.axvline(x = 1e3*occ_IN[0][0], color = 'red')
+                    ax5.axvline(x = 1e3*occ_IN[0][1], color = 'red')
+                    ax5.legend(['PD data Raw', 'PD data Filt.' ,'Detected occlusions'])
+                    PD_IN = np.mean([1e3 * occ_IN[0][0], 1e3 * occ_IN[0][1]])
+                except:
+                    PD_IN = 0
+                    print('Error detecting Occlusions IN')
+                prairie.style(ax5)
+
+                # PHOTODIODE OUT
+                # --------------
+                ax6.plot(1e3 * self.t2[::Dec], self.pd2[::Dec], linewidth=1)
+                try:
+                    occ_OUT = ops.find_occlusions(self.pd2, IN=False, StartTime=self.t2[0], return_processing=True)
+                    ax6.plot(1e3 * occ_OUT[2][::Dec], occ_OUT[3][::Dec], linewidth=1)
+                    ax6.axvline(x = 1e3*occ_OUT[0][0], color = 'red')
+                    ax6.axvline(x = 1e3*occ_OUT[0][1], color = 'red')
+                    PD_OUT = np.mean([1e3 * occ_OUT[0][0], 1e3 * occ_OUT[0][1]])
+                except:
+                    PD_OUT = 0
+                    print('Error detecting Occlusions OUT')
+                prairie.style(ax6)
+
+            else:
+                PD_IN = 0
                 PD_OUT = 0
-                print('Error detecting Occlusions OUT')
-            prairie.style(ax6)
 
             self.fig.tight_layout()
 
