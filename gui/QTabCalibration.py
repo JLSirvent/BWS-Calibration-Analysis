@@ -169,6 +169,7 @@ class plot(mplCanvas):
                     config = configparser.RawConfigParser()
                     config.read(parameter_file)
                     positions_for_fit = eval(config.get('OPS processing parameters', 'positions_for_fit'))
+                    poli_order = eval(config.get('OPS processing parameters', 'polynomial_fit_order'))
 
                     # Trimm Vectors for only region of interest
                     Idx = np.where((laser_position>=positions_for_fit[0]) & (laser_position<=positions_for_fit[1]))
@@ -204,7 +205,7 @@ class plot(mplCanvas):
                     param = popt
 
                     xfit = np.arange(np.min(occlusion_position),np.max(occlusion_position),(np.max(occlusion_position)-np.min(occlusion_position))/1000)
-                    fit_poly = np.polyfit(occlusion_position, laser_position, 5)
+                    fit_poly = np.polyfit(occlusion_position, laser_position, poli_order)
                     fit_func = np.poly1d(fit_poly)
                     yfit = fit_func(xfit)
 
